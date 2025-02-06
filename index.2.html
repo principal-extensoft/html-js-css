@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Converter SPA</title>
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-papNM+hyh2Lbz0Y1/dQq42KJgYZdUL54jkVnSVgfTNyWQ8pZf+UXMbPjplhhO+1i1RMkE8lbJb5g6lXQ2r3X0A=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    /* Global & layout styles */
+    body {
+      overflow: hidden;
+    }
+    .sidebar {
+      height: 100vh;
+      background-color: #f8f9fa;
+      padding-top: 1rem;
+    }
+    .sidebar .nav-link {
+      cursor: pointer;
+    }
+    .content-area {
+      height: 100vh;
+      overflow: hidden;
+    }
+    .content-area textarea {
+      width: 100%;
+      resize: none;
+    }
+    /* Resizable container for Markdown/HTML split view */
+    .resizable-container {
+      display: flex;
+      height: calc(100vh - 40px);
+      overflow: hidden;
+    }
+    .left-panel {
+      overflow: auto;
+      font-family: "Courier New", Courier, monospace;
+      border: none;
+    }
+    .right-panel {
+      overflow: auto;
+      padding: 0.5rem;
+      font-family: "Courier New", Courier, monospace;
+      background: #fff;
+    }
+    .divider {
+      width: 5px;
+      background: #ddd;
+      cursor: col-resize;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <nav class="col-md-3 col-lg-2 sidebar">
+        <ul class="nav flex-column" id="tabs">
+          <li class="nav-item">
+            <a class="nav-link active" data-tab="input">
+              <i class="fa-solid fa-pencil"></i> Input
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="html">
+              <i class="fa-solid fa-code"></i> HTML
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="markdown">
+              <i class="fa-brands fa-markdown"></i> Markdown
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="raw">
+              <i class="fa-solid fa-file-lines"></i> RAW
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="content">
+              <i class="fa-solid fa-file-code"></i> Content
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- Main Content Area -->
+      <main class="col-md-9 col-lg-10 content-area">
+        <div id="content-wrapper" class="p-3">
+          <!-- Content will be loaded here -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Bootstrap Toast Container -->
+  <div
+    aria-live="polite"
+    aria-atomic="true"
+    class="position-fixed bottom-0 end-0 p-3"
+    style="z-index: 11"
+  >
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.1/turndown.min.js"></script>
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /**********************
+     * Global Variables & Setup
+     **********************/
+    let conversionResult = null;
+    const turndownService = new TurndownService();
+
+    /**********************
+     * Helper Functions
+     **********************/
+    // Detects content type by inspecting the raw content.
+    function detectContentType(content) {
+      const trimmed = content.trim();
+      // Heuristic: if HTML tags are present, treat as HTML.
+      if (/<\/?[a-z][\s\S]*>/i.test(trimmed)) {
+        return "html";
+      }
+      // Check for common Markdown markers.
+      if (/^(#|\*{1,2}|_+)/m.test(trimmed)) {
+        return "markdown";
+      }
+      // Otherwise assume plain text.
+      return "text";
+    }
+
+    // Converts plain text into structured HTML and Markdown.
+    function parseText(content) {
+      // Split the text into blocks by double newlines.
+      const blocks = content.split(/\n\s*\n/);
+      let htmlOutput = "";
+      let markdownOutput = "";
+      blocks.forEach(block => {
+        // Trim and split each block into lines.
+        const lines = block.split("\n").map(line => line.trim());
+        // Check if the block appears to be a list (all lines start with '-', '*' or digit+dot).
+        if (lines.length > 1 && lines.every(line => /^(\-|\*|\d+\.)\s/.test(line))) {
+          // For HTML, wrap in a list.
+          if (/^\d+\.\s/.test(lines[0])) {
+            htmlOutput += "<ol>" + lines.map(line => "<li>" + line.replace(/^\d+\.\s/, "") + "</li>").join("") + "</ol>";
+          } else {
+            htmlOutput += "<ul>" + lines.map(line => "<li>" + line.replace(/^(\-|\*)\s/, "") + "</li>").join("") + "</ul>";
+          }
+          // For Markdown, output the lines as-is.
+          markdownOutput += lines.join("\n") + "\n\n";
+        } else {
+          // Otherwise, treat as a paragraph.
+          htmlOutput += "<p>" + lines.join(" ") + "</p>";
+          markdownOutput += lines.join(" ") + "\n\n";
+        }
+      });
+      return { html: htmlOutput, markdown: markdownOutput.trim() };
+    }
+
+    // Main conversion function that determines the content type and returns an object.
+    function convertContent(rawContent) {
+      const contentType = detectContentType(rawContent);
+      switch (contentType) {
+        case "markdown":
+          return {
+            html: marked.parse(rawContent),
+            markdown: rawContent,
+            raw: rawContent,
+            type: "markdown"
+          };
+        case "html":
+          // Sanitize and convert HTML to Markdown.
+          const sanitized = DOMPurify.sanitize(rawContent);
+          return {
+            html: sanitized,
+            markdown: turndownService.turndown(sanitized),
+            raw: rawContent,
+            type: "html"
+          };
+        case "text":
+          const parsed = parseText(rawContent);
+          return {
+            html: parsed.html,
+            markdown: parsed.markdown,
+            raw: rawContent,
+            type: "text"
+          };
+        default:
+          throw new Error("Unknown content type");
+      }
+    }
+
+    // Displays a Bootstrap toast for notifications.
+    function showToast(message, type = "error") {
+      const toastId = "toast" + Date.now();
+      const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-bg-${
+        type === "error" ? "danger" : "success"
+      } border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+              ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      `;
+      document.getElementById("toast-container").insertAdjacentHTML("beforeend", toastHTML);
+      let toastEl = document.getElementById(toastId);
+      let bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      bsToast.show();
+      toastEl.addEventListener("hidden.bs.toast", function () {
+        toastEl.remove();
+      });
+    }
+
+    // Initializes a resizable divider between two panels.
+    function initDivider(divider, leftPanel, rightPanel) {
+      let isDragging = false;
+      divider.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        document.body.style.cursor = 'col-resize';
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const containerRect = divider.parentNode.getBoundingClientRect();
+        let newLeftWidth = e.clientX - containerRect.left;
+        const minWidth = 100;
+        const maxWidth = containerRect.width - minWidth;
+        if(newLeftWidth < minWidth) newLeftWidth = minWidth;
+        if(newLeftWidth > maxWidth) newLeftWidth = maxWidth;
+        leftPanel.style.width = newLeftWidth + 'px';
+        rightPanel.style.width = (containerRect.width - newLeftWidth - divider.offsetWidth) + 'px';
+      });
+      document.addEventListener('mouseup', function(e) {
+        if (isDragging) {
+          isDragging = false;
+          document.body.style.cursor = 'default';
+        }
+      });
+    }
+
+    /**********************
+     * Update Content Area Based on Tab
+     **********************/
+    function updateContentArea(tab) {
+      const contentWrapper = document.getElementById("content-wrapper");
+      contentWrapper.innerHTML = ""; // Clear existing content
+
+      if (tab === "input") {
+        // Input tab: textarea for raw input and Convert button.
+        const textarea = document.createElement("textarea");
+        textarea.id = "input-area";
+        textarea.className = "form-control";
+        textarea.placeholder = "Paste your content here...";
+        textarea.style.height = "calc(100vh - 100px)";
+        textarea.style.fontFamily = "monospace";
+        if (conversionResult) {
+          textarea.value = conversionResult.raw;
+        }
+        contentWrapper.appendChild(textarea);
+
+        const convertBtn = document.createElement("button");
+        convertBtn.id = "convert-btn";
+        convertBtn.className = "btn btn-primary mt-2";
+        convertBtn.innerHTML = '<i class="fa-solid fa-magic"></i> Convert';
+        convertBtn.addEventListener("click", function () {
+          const inputVal = document.getElementById("input-area").value;
+          if (!inputVal.trim()) {
+            showToast("Input is empty!", "error");
+            return;
+          }
+          try {
+            conversionResult = convertContent(inputVal);
+            showToast("Conversion successful!", "success");
+            // Update the Content tab label based on conversion result type.
+            const contentTab = document.querySelector('[data-tab="content"]');
+            if (contentTab && conversionResult) {
+              contentTab.innerHTML = `<i class="fa-solid fa-file-code"></i> Content ${conversionResult.type.charAt(0).toUpperCase() + conversionResult.type.slice(1)}`;
+            }
+          } catch (err) {
+            showToast("Conversion failed: " + err.message, "error");
+          }
+        });
+        contentWrapper.appendChild(convertBtn);
+
+      } else if (tab === "markdown") {
+        // Markdown tab: two-panel split view (editor & real-time preview)
+        const container = document.createElement("div");
+        container.className = "resizable-container";
+
+        // Left panel: Markdown editor textarea.
+        const leftPanel = document.createElement("textarea");
+        leftPanel.id = "markdown-editor";
+        leftPanel.className = "form-control left-panel";
+        leftPanel.style.width = "50%";
+        leftPanel.value = conversionResult ? conversionResult.markdown : "";
+        
+        // Divider (grip bar).
+        const divider = document.createElement("div");
+        divider.className = "divider";
+        
+        // Right panel: Preview area that renders Markdown.
+        const rightPanel = document.createElement("div");
+        rightPanel.id = "markdown-preview";
+        rightPanel.className = "right-panel";
+        rightPanel.style.width = "50%";
+        rightPanel.innerHTML = conversionResult ? marked.parse(conversionResult.markdown) : "";
+
+        container.appendChild(leftPanel);
+        container.appendChild(divider);
+        container.appendChild(rightPanel);
+        contentWrapper.appendChild(container);
+
+        // Real-time preview: update preview when editor content changes.
+        leftPanel.addEventListener("input", function() {
+          rightPanel.innerHTML = marked.parse(leftPanel.value);
+        });
+
+        initDivider(divider, leftPanel, rightPanel);
+
+      } else if (tab === "html") {
+        // HTML tab: two-panel view with pretty HTML and rendered preview.
+        const container = document.createElement("div");
+        container.className = "resizable-container";
+
+        // Left panel: HTML editor (raw/pretty HTML).
+        const leftPanel = document.createElement("textarea");
+        leftPanel.id = "html-editor";
+        leftPanel.className = "form-control left-panel";
+        leftPanel.style.width = "50%";
+        leftPanel.value = conversionResult ? conversionResult.html : "";
+
+        // Divider.
+        const divider = document.createElement("div");
+        divider.className = "divider";
+
+        // Right panel: HTML preview (website-like view).
+        const rightPanel = document.createElement("div");
+        rightPanel.id = "html-preview";
+        rightPanel.className = "right-panel";
+        rightPanel.style.width = "50%";
+        rightPanel.style.border = "1px solid #ccc";
+        rightPanel.innerHTML = conversionResult ? conversionResult.html : "";
+
+        container.appendChild(leftPanel);
+        container.appendChild(divider);
+        container.appendChild(rightPanel);
+        contentWrapper.appendChild(container);
+
+        // Real-time preview: update preview as HTML is edited.
+        leftPanel.addEventListener("input", function() {
+          rightPanel.innerHTML = leftPanel.value;
+        });
+
+        initDivider(divider, leftPanel, rightPanel);
+
+      } else if (tab === "raw") {
+        // RAW tab: display the raw text.
+        const ta = document.createElement("textarea");
+        ta.className = "form-control";
+        ta.style.height = "calc(100vh - 40px)";
+        ta.style.fontFamily = "monospace";
+        ta.value = conversionResult ? conversionResult.raw : "";
+        contentWrapper.appendChild(ta);
+
+      } else if (tab === "content") {
+        // Content tab: display conversionResult as pretty JSON in an editable textarea, with a copy button.
+        const container = document.createElement("div");
+        // Create copy button.
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn btn-secondary mb-2";
+        copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy';
+        container.appendChild(copyBtn);
+
+        // Create textarea.
+        const jsonArea = document.createElement("textarea");
+        jsonArea.className = "form-control";
+        jsonArea.style.height = "calc(100vh - 80px)";
+        jsonArea.style.fontFamily = "monospace";
+        jsonArea.style.whiteSpace = "pre";
+        jsonArea.value = conversionResult ? JSON.stringify(conversionResult, null, 2) : "{}";
+        container.appendChild(jsonArea);
+        contentWrapper.appendChild(container);
+
+        copyBtn.addEventListener("click", function() {
+          navigator.clipboard.writeText(jsonArea.value).then(() => {
+            showToast("Copied to clipboard!", "success");
+          }).catch(err => {
+            showToast("Copy failed: " + err.message, "error");
+          });
+        });
+      }
+    }
+
+    /**********************
+     * Event Listeners & Initialization
+     **********************/
+    document.addEventListener("DOMContentLoaded", function () {
+      // Load the Input tab by default.
+      updateContentArea("input");
+
+      // Sidebar tab click events.
+      document.querySelectorAll("#tabs a").forEach(function (tabLink) {
+        tabLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          // Remove active state from all tabs.
+          document.querySelectorAll("#tabs a").forEach(function (link) {
+            link.classList.remove("active");
+          });
+          // Activate the clicked tab.
+          this.classList.add("active");
+          // Update the main content area.
+          const tab = this.getAttribute("data-tab");
+          updateContentArea(tab);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Converter SPA</title>
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-papNM+hyh2Lbz0Y1/dQq42KJgYZdUL54jkVnSVgfTNyWQ8pZf+UXMbPjplhhO+1i1RMkE8lbJb5g6lXQ2r3X0A=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    /* Global & layout styles */
+    body {
+      overflow: hidden;
+    }
+    .sidebar {
+      height: 100vh;
+      background-color: #f8f9fa;
+      padding-top: 1rem;
+    }
+    .sidebar .nav-link {
+      cursor: pointer;
+    }
+    .content-area {
+      height: 100vh;
+      overflow: hidden;
+    }
+    .content-area textarea {
+      width: 100%;
+      resize: none;
+    }
+    /* Resizable container for Markdown/HTML split view */
+    .resizable-container {
+      display: flex;
+      height: calc(100vh - 40px);
+      overflow: hidden;
+    }
+    .left-panel {
+      overflow: auto;
+      font-family: "Courier New", Courier, monospace;
+      border: none;
+    }
+    .right-panel {
+      overflow: auto;
+      padding: 0.5rem;
+      font-family: "Courier New", Courier, monospace;
+      background: #fff;
+    }
+    .divider {
+      width: 5px;
+      background: #ddd;
+      cursor: col-resize;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <nav class="col-md-3 col-lg-2 sidebar">
+        <ul class="nav flex-column" id="tabs">
+          <li class="nav-item">
+            <a class="nav-link active" data-tab="input">
+              <i class="fa-solid fa-pencil"></i> Input
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="html">
+              <i class="fa-solid fa-code"></i> HTML
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="markdown">
+              <i class="fa-brands fa-markdown"></i> Markdown
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="raw">
+              <i class="fa-solid fa-file-lines"></i> RAW
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="content">
+              <i class="fa-solid fa-file-code"></i> Content
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- Main Content Area -->
+      <main class="col-md-9 col-lg-10 content-area">
+        <div id="content-wrapper" class="p-3">
+          <!-- Content will be loaded here -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Bootstrap Toast Container -->
+  <div
+    aria-live="polite"
+    aria-atomic="true"
+    class="position-fixed bottom-0 end-0 p-3"
+    style="z-index: 11"
+  >
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.1/turndown.min.js"></script>
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /**********************
+     * Global Variables & Setup
+     **********************/
+    let conversionResult = null;
+    const turndownService = new TurndownService();
+
+    /**********************
+     * Helper Functions
+     **********************/
+    // Detects content type by inspecting the raw content.
+    function detectContentType(content) {
+      const trimmed = content.trim();
+      // Heuristic: if HTML tags are present, treat as HTML.
+      if (/<\/?[a-z][\s\S]*>/i.test(trimmed)) {
+        return "html";
+      }
+      // Check for common Markdown markers.
+      if (/^(#|\*{1,2}|_+)/m.test(trimmed)) {
+        return "markdown";
+      }
+      // Otherwise assume plain text.
+      return "text";
+    }
+
+    // Converts plain text into structured HTML and Markdown.
+    function parseText(content) {
+      // Split the text into blocks by double newlines.
+      const blocks = content.split(/\n\s*\n/);
+      let htmlOutput = "";
+      let markdownOutput = "";
+      blocks.forEach(block => {
+        // Trim and split each block into lines.
+        const lines = block.split("\n").map(line => line.trim());
+        // Check if the block appears to be a list (all lines start with '-', '*' or digit+dot).
+        if (lines.length > 1 && lines.every(line => /^(\-|\*|\d+\.)\s/.test(line))) {
+          // For HTML, wrap in a list.
+          if (/^\d+\.\s/.test(lines[0])) {
+            htmlOutput += "<ol>" + lines.map(line => "<li>" + line.replace(/^\d+\.\s/, "") + "</li>").join("") + "</ol>";
+          } else {
+            htmlOutput += "<ul>" + lines.map(line => "<li>" + line.replace(/^(\-|\*)\s/, "") + "</li>").join("") + "</ul>";
+          }
+          // For Markdown, output the lines as-is.
+          markdownOutput += lines.join("\n") + "\n\n";
+        } else {
+          // Otherwise, treat as a paragraph.
+          htmlOutput += "<p>" + lines.join(" ") + "</p>";
+          markdownOutput += lines.join(" ") + "\n\n";
+        }
+      });
+      return { html: htmlOutput, markdown: markdownOutput.trim() };
+    }
+
+    // Main conversion function that determines the content type and returns an object.
+    function convertContent(rawContent) {
+      const contentType = detectContentType(rawContent);
+      switch (contentType) {
+        case "markdown":
+          return {
+            html: marked.parse(rawContent),
+            markdown: rawContent,
+            raw: rawContent,
+            type: "markdown"
+          };
+        case "html":
+          // Sanitize and convert HTML to Markdown.
+          const sanitized = DOMPurify.sanitize(rawContent);
+          return {
+            html: sanitized,
+            markdown: turndownService.turndown(sanitized),
+            raw: rawContent,
+            type: "html"
+          };
+        case "text":
+          const parsed = parseText(rawContent);
+          return {
+            html: parsed.html,
+            markdown: parsed.markdown,
+            raw: rawContent,
+            type: "text"
+          };
+        default:
+          throw new Error("Unknown content type");
+      }
+    }
+
+    // Displays a Bootstrap toast for notifications.
+    function showToast(message, type = "error") {
+      const toastId = "toast" + Date.now();
+      const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-bg-${
+        type === "error" ? "danger" : "success"
+      } border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+              ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      `;
+      document.getElementById("toast-container").insertAdjacentHTML("beforeend", toastHTML);
+      let toastEl = document.getElementById(toastId);
+      let bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      bsToast.show();
+      toastEl.addEventListener("hidden.bs.toast", function () {
+        toastEl.remove();
+      });
+    }
+
+    // Initializes a resizable divider between two panels.
+    function initDivider(divider, leftPanel, rightPanel) {
+      let isDragging = false;
+      divider.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        document.body.style.cursor = 'col-resize';
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const containerRect = divider.parentNode.getBoundingClientRect();
+        let newLeftWidth = e.clientX - containerRect.left;
+        const minWidth = 100;
+        const maxWidth = containerRect.width - minWidth;
+        if(newLeftWidth < minWidth) newLeftWidth = minWidth;
+        if(newLeftWidth > maxWidth) newLeftWidth = maxWidth;
+        leftPanel.style.width = newLeftWidth + 'px';
+        rightPanel.style.width = (containerRect.width - newLeftWidth - divider.offsetWidth) + 'px';
+      });
+      document.addEventListener('mouseup', function(e) {
+        if (isDragging) {
+          isDragging = false;
+          document.body.style.cursor = 'default';
+        }
+      });
+    }
+
+    /**********************
+     * Update Content Area Based on Tab
+     **********************/
+    function updateContentArea(tab) {
+      const contentWrapper = document.getElementById("content-wrapper");
+      contentWrapper.innerHTML = ""; // Clear existing content
+
+      if (tab === "input") {
+        // Input tab: textarea for raw input and Convert button.
+        const textarea = document.createElement("textarea");
+        textarea.id = "input-area";
+        textarea.className = "form-control";
+        textarea.placeholder = "Paste your content here...";
+        textarea.style.height = "calc(100vh - 100px)";
+        textarea.style.fontFamily = "monospace";
+        if (conversionResult) {
+          textarea.value = conversionResult.raw;
+        }
+        contentWrapper.appendChild(textarea);
+
+        const convertBtn = document.createElement("button");
+        convertBtn.id = "convert-btn";
+        convertBtn.className = "btn btn-primary mt-2";
+        convertBtn.innerHTML = '<i class="fa-solid fa-magic"></i> Convert';
+        convertBtn.addEventListener("click", function () {
+          const inputVal = document.getElementById("input-area").value;
+          if (!inputVal.trim()) {
+            showToast("Input is empty!", "error");
+            return;
+          }
+          try {
+            conversionResult = convertContent(inputVal);
+            showToast("Conversion successful!", "success");
+            // Update the Content tab label based on conversion result type.
+            const contentTab = document.querySelector('[data-tab="content"]');
+            if (contentTab && conversionResult) {
+              contentTab.innerHTML = `<i class="fa-solid fa-file-code"></i> Content ${conversionResult.type.charAt(0).toUpperCase() + conversionResult.type.slice(1)}`;
+            }
+          } catch (err) {
+            showToast("Conversion failed: " + err.message, "error");
+          }
+        });
+        contentWrapper.appendChild(convertBtn);
+
+      } else if (tab === "markdown") {
+        // Markdown tab: two-panel split view (editor & real-time preview)
+        const container = document.createElement("div");
+        container.className = "resizable-container";
+
+        // Left panel: Markdown editor textarea.
+        const leftPanel = document.createElement("textarea");
+        leftPanel.id = "markdown-editor";
+        leftPanel.className = "form-control left-panel";
+        leftPanel.style.width = "50%";
+        leftPanel.value = conversionResult ? conversionResult.markdown : "";
+        
+        // Divider (grip bar).
+        const divider = document.createElement("div");
+        divider.className = "divider";
+        
+        // Right panel: Preview area that renders Markdown.
+        const rightPanel = document.createElement("div");
+        rightPanel.id = "markdown-preview";
+        rightPanel.className = "right-panel";
+        rightPanel.style.width = "50%";
+        rightPanel.innerHTML = conversionResult ? marked.parse(conversionResult.markdown) : "";
+
+        container.appendChild(leftPanel);
+        container.appendChild(divider);
+        container.appendChild(rightPanel);
+        contentWrapper.appendChild(container);
+
+        // Real-time preview: update preview when editor content changes.
+        leftPanel.addEventListener("input", function() {
+          rightPanel.innerHTML = marked.parse(leftPanel.value);
+        });
+
+        initDivider(divider, leftPanel, rightPanel);
+
+      } else if (tab === "html") {
+        // HTML tab: two-panel view with pretty HTML and rendered preview.
+        const container = document.createElement("div");
+        container.className = "resizable-container";
+
+        // Left panel: HTML editor (raw/pretty HTML).
+        const leftPanel = document.createElement("textarea");
+        leftPanel.id = "html-editor";
+        leftPanel.className = "form-control left-panel";
+        leftPanel.style.width = "50%";
+        leftPanel.value = conversionResult ? conversionResult.html : "";
+
+        // Divider.
+        const divider = document.createElement("div");
+        divider.className = "divider";
+
+        // Right panel: HTML preview (website-like view).
+        const rightPanel = document.createElement("div");
+        rightPanel.id = "html-preview";
+        rightPanel.className = "right-panel";
+        rightPanel.style.width = "50%";
+        rightPanel.style.border = "1px solid #ccc";
+        rightPanel.innerHTML = conversionResult ? conversionResult.html : "";
+
+        container.appendChild(leftPanel);
+        container.appendChild(divider);
+        container.appendChild(rightPanel);
+        contentWrapper.appendChild(container);
+
+        // Real-time preview: update preview as HTML is edited.
+        leftPanel.addEventListener("input", function() {
+          rightPanel.innerHTML = leftPanel.value;
+        });
+
+        initDivider(divider, leftPanel, rightPanel);
+
+      } else if (tab === "raw") {
+        // RAW tab: display the raw text.
+        const ta = document.createElement("textarea");
+        ta.className = "form-control";
+        ta.style.height = "calc(100vh - 40px)";
+        ta.style.fontFamily = "monospace";
+        ta.value = conversionResult ? conversionResult.raw : "";
+        contentWrapper.appendChild(ta);
+
+      } else if (tab === "content") {
+        // Content tab: display conversionResult as pretty JSON in an editable textarea, with a copy button.
+        const container = document.createElement("div");
+        // Create copy button.
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn btn-secondary mb-2";
+        copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy';
+        container.appendChild(copyBtn);
+
+        // Create textarea.
+        const jsonArea = document.createElement("textarea");
+        jsonArea.className = "form-control";
+        jsonArea.style.height = "calc(100vh - 80px)";
+        jsonArea.style.fontFamily = "monospace";
+        jsonArea.style.whiteSpace = "pre";
+        jsonArea.value = conversionResult ? JSON.stringify(conversionResult, null, 2) : "{}";
+        container.appendChild(jsonArea);
+        contentWrapper.appendChild(container);
+
+        copyBtn.addEventListener("click", function() {
+          navigator.clipboard.writeText(jsonArea.value).then(() => {
+            showToast("Copied to clipboard!", "success");
+          }).catch(err => {
+            showToast("Copy failed: " + err.message, "error");
+          });
+        });
+      }
+    }
+
+    /**********************
+     * Event Listeners & Initialization
+     **********************/
+    document.addEventListener("DOMContentLoaded", function () {
+      // Load the Input tab by default.
+      updateContentArea("input");
+
+      // Sidebar tab click events.
+      document.querySelectorAll("#tabs a").forEach(function (tabLink) {
+        tabLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          // Remove active state from all tabs.
+          document.querySelectorAll("#tabs a").forEach(function (link) {
+            link.classList.remove("active");
+          });
+          // Activate the clicked tab.
+          this.classList.add("active");
+          // Update the main content area.
+          const tab = this.getAttribute("data-tab");
+          updateContentArea(tab);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
