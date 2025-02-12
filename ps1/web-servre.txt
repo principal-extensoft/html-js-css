@@ -1,0 +1,34 @@
+<#
+.SYNOPSIS
+    Lists IIS Sites, their settings, and App Pools on the local machine.
+.DESCRIPTION
+    Uses the WebAdministration module to retrieve:
+      - All IIS site names, states, physical paths, and bindings
+      - All App Pool names, states, runtime versions, etc.
+#>
+
+# Import the WebAdministration module (on Windows Server / with IIS installed)
+Import-Module WebAdministration
+
+Write-Host "=================== IIS Websites ==================="
+Get-Website | ForEach-Object {
+    [PSCustomObject]@{
+        Name         = $_.Name
+        ID           = $_.ID
+        State        = $_.State
+        PhysicalPath = $_.PhysicalPath
+        Bindings     = ($_ | Select-Object -ExpandProperty Bindings) -join "; "
+    }
+} | Format-Table -AutoSize
+
+Write-Host "`n=================== IIS Application Pools ==================="
+Get-WebAppPool | ForEach-Object {
+    [PSCustomObject]@{
+        Name                   = $_.Name
+        State                  = $_.State
+        ManagedRuntimeVersion  = $_.managedRuntimeVersion
+        ManagedPipelineMode    = $_.managedPipelineMode
+        IdentityType           = $_.processModel.identityType
+        UserName               = $_.processModel.userName
+    }
+} | Format-Table -AutoSize
