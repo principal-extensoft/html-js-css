@@ -171,10 +171,18 @@ $jsonOutput = $allServerInfo | ConvertTo-Json -Depth 6
 # Output JSON to console.
 Write-Output $jsonOutput
 
-# Write JSON to a file with the naming convention: {yyyy-MM-dd.HH-mm}.{ScriptName}.json.
+# Define the data folder relative to the script's current directory
+$dataFolder = ".\data"
+
+# Create the folder if it doesn't exist
+if (-not (Test-Path $dataFolder)) {
+    New-Item -ItemType Directory -Path $dataFolder | Out-Null
+}
+
+# Create the output file path within the data folder
 $timestamp  = Get-Date -Format "yyyy-MM-dd.HH-mm"
 $scriptName = [System.IO.Path]::GetFileNameWithoutExtension($MyInvocation.MyCommand.Name)
-$outputFile = "$timestamp.$scriptName.json"
+$outputFile = "$dataFolder\$timestamp.$scriptName.json"
 
 $jsonOutput | Out-File -FilePath $outputFile -Encoding UTF8
 
