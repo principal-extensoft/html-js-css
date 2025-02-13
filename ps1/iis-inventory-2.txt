@@ -1,0 +1,191 @@
+<#
+.SYNOPSIS
+   Collects detailed IIS configuration information from one or more remote servers.
+.DESCRIPTION
+   For each specified server, the script gathers:
+     - Server details (name, all IPv4 addresses with one marked as primary)
+     - IIS Websites, their bindings, root physical paths, and any applications/virtual directories.
+       For each website, the primary AppPool is obtained from the root application ("/").
+     - FTP sites (if any)
+     - Application Pools (name, identity, CLR version, enable32Bit setting, state, etc.)
+   The results are output as JSON to the console and saved to a JSON file.
+.PARAMETER ServerNames
+   An array of server names to query. If omitted, the script uses the local computer.
+.EXAMPLE
+   .\Get-IISInventory.ps1 -ServerNames "WEBDEV","WEBVAL"
+   If passed as a single comma-delimited string, it will be split automatically.
+#>
+param(
+    [Parameter(Mandatory = $false)]
+    [string[]]$ServerNames = $env:COMPUTERNAME
+)
+
+# If $ServerNames is a single string containing commas, split it into an array.
+if ($ServerNames -is [string] -and $ServerNames.Contains(",")) {
+    $ServerNames = $ServerNames -split "\s*,\s*"
+}
+
+function Get-RemoteIISInfo {
+    param(
+        [string]$ComputerName
+    )
+
+    $scriptBlock = {
+        # Import the WebAdministration module
+        Import-Module WebAdministration -ErrorAction SilentlyContinue
+
+        # Create a server info object
+        $serverInfo = @{
+            ServerName = $env:COMPUTERNAME
+            IPs        = @()
+            Sites      = @()
+            AppPools   = @()
+        }
+
+        # --- Get IP addresses ---
+        try {
+            $addresses = [System.Net.Dns]::GetHostEntry($env:COMPUTERNAME).AddressList |
+                Where-Object { $_.AddressFamily -eq 'InterNetwork' }
+            $i = 0
+            foreach ($addr in $addresses) {
+                $serverInfo.IPs += [PSCustomObject]@{
+                    IP        = $addr.ToString()
+                    IsPrimary = ($i -eq 0)
+                }
+                $i++
+            }
+        } catch {
+            $serverInfo.IPs += [PSCustomObject]@{
+                IP        = "Unable to resolve IP"
+                IsPrimary = $true
+            }
+        }
+
+        # --- Get Application Pools ---
+        $appPools = Get-ChildItem IIS:\AppPools | ForEach-Object {
+            [PSCustomObject]@{
+                Name        = $_.Name
+                Identity    = $_.processModel.userName
+                CLRVersion  = $_.managedRuntimeVersion
+                Enable32Bit = $_.enable32BitAppOnWin64
+                State       = $_.state
+            }
+        }
+        $serverInfo.AppPools = $appPools
+
+        # --- Get IIS Websites ---
+        $webSites = Get-Website | ForEach-Object {
+            # Gather binding details
+            $siteBindings = @()
+            foreach ($b in $_.Bindings.Collection) {
+                $siteBindings += [PSCustomObject]@{
+                    Protocol           = $b.protocol
+                    BindingInformation = $b.bindingInformation
+                }
+            }
+            
+            # Try to get the root application ("/") for the website to capture its AppPool and physical path.
+            $rootApp = Get-WebApplication -Site $_.Name -Name "/" -ErrorAction SilentlyContinue
+            if ($rootApp) {
+                $siteAppPool = $rootApp.ApplicationPool
+                $physicalPath = $rootApp.physicalPath
+            }
+            else {
+                $siteAppPool = "N/A"
+                $physicalPath = $_.PhysicalPath
+            }
+    
+            # Get additional applications (each might have its own AppPool)
+            $applications = @()
+            $apps = Get-WebApplication -Site $_.Name -ErrorAction SilentlyContinue
+            foreach ($app in $apps) {
+                $vdirs = Get-WebVirtualDirectory -Site $_.Name -Application $app.Path -ErrorAction SilentlyContinue | ForEach-Object {
+                    [PSCustomObject]@{
+                        Path         = $_.Path
+                        PhysicalPath = $_.PhysicalPath
+                    }
+                }
+                $applications += [PSCustomObject]@{
+                    Path              = $app.Path
+                    ApplicationPool   = $app.ApplicationPool
+                    VirtualDirectories= $vdirs
+                }
+            }
+            
+            [PSCustomObject]@{
+                Name         = $_.Name
+                ID           = $_.ID
+                State        = $_.State
+                PhysicalPath = $physicalPath
+                Bindings     = $siteBindings
+                Type         = "IIS Website"
+                AppPool      = $siteAppPool
+                Applications = $applications
+            }
+        }
+
+        # --- Get FTP Sites (if any) ---
+        $ftpSites = @()
+        try {
+            $ftpSites = Get-WebFtpSite -ErrorAction Stop | ForEach-Object {
+                $ftpBindings = @()
+                foreach ($b in $_.Bindings.Collection) {
+                    $ftpBindings += [PSCustomObject]@{
+                        Protocol           = $b.protocol
+                        BindingInformation = $b.bindingInformation
+                    }
+                }
+                [PSCustomObject]@{
+                    Name         = $_.Name
+                    State        = $_.State
+                    PhysicalPath = $_.PhysicalPath
+                    Bindings     = $ftpBindings
+                    Type         = "FTP Site"
+                }
+            }
+        } catch {
+            # If the command fails, there might be no FTP sites or the module isn't available.
+        }
+        
+        # Combine IIS Websites and FTP sites
+        $serverInfo.Sites = $webSites + $ftpSites
+
+        return $serverInfo
+    }
+
+    try {
+        $result = Invoke-Command -ComputerName $ComputerName -ScriptBlock $scriptBlock -ErrorAction Stop
+        return $result
+    } catch {
+        Write-Error "Failed to get IIS info from $($ComputerName): $($_.Exception.Message)"
+    }
+}
+
+# --- Main Execution ---
+$allServerInfo = @()
+foreach ($server in $ServerNames) {
+    $info = Get-RemoteIISInfo -ComputerName $server
+    if ($info) {
+        $allServerInfo += $info
+    }
+}
+
+# Convert the data to JSON with sufficient depth for nested objects.
+$jsonOutput = $allServerInfo | ConvertTo-Json -Depth 6
+
+# Output JSON to console.
+Write-Output $jsonOutput
+
+# Write JSON to a file in the ./data folder with the naming convention: {yyyy-MM-dd.HH-mm}.{ScriptName}.json.
+$dataFolder = ".\data"
+if (-not (Test-Path $dataFolder)) {
+    New-Item -ItemType Directory -Path $dataFolder | Out-Null
+}
+
+$timestamp  = Get-Date -Format "yyyy-MM-dd.HH-mm"
+$scriptName = [System.IO.Path]::GetFileNameWithoutExtension($MyInvocation.MyCommand.Name)
+$outputFile = "$dataFolder\$timestamp.$scriptName.json"
+
+$jsonOutput | Out-File -FilePath $outputFile -Encoding UTF8
+
+Write-Host "JSON output written to file: $outputFile"
