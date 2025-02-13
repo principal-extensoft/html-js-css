@@ -4,3 +4,8 @@
 REM Replace the server names below as needed
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Get-IISInventory.ps1" -ServerNames "DEV","VAL","PROD"
 pause
+
+
+@echo off
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Get-IISInventory.ps1" -ServerNames "WEBDEV,WEBVAL"
+pause
