@@ -1,0 +1,140 @@
+[
+    {
+        "AppPools":  [
+                         {
+                             "Name":  ".NET v4.5",
+                             "Identity":  "",
+                             "CLRVersion":  "v4.0",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         },
+                         {
+                             "Name":  ".NET v4.5 Classic",
+                             "Identity":  "",
+                             "CLRVersion":  "v4.0",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         },
+                         {
+                             "Name":  "CMS-CONTENT",
+                             "Identity":  "CMS\\USER2",
+                             "CLRVersion":  "",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         },
+                         {
+                             "Name":  "CMS-MEMBERSHIP",
+                             "Identity":  "CMS\\USER3",
+                             "CLRVersion":  "",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         }
+                         {
+                             "Name":  "DefaultAppPool",
+                             "Identity":  "",
+                             "CLRVersion":  "v4.0",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         },
+                         {
+                             "Name":  "vastdev",
+                             "Identity":  "DOM\\USER2",
+                             "CLRVersion":  "v4.0",
+                             "Enable32Bit":  true,
+                             "State":  "Started"
+                         },
+                         {
+                             "Name":  "Webservices",
+                             "Identity":  "DOM\\USER1",
+                             "CLRVersion":  "v4.0",
+                             "Enable32Bit":  false,
+                             "State":  "Started"
+                         }
+                     ],
+        "ServerName":  "MYWEBSERVER",
+        "Sites":  [
+                      {
+                          "Name":  "CMS",
+                          "ID":  9,
+                          "State":  "Started",
+                          "PhysicalPath":  "Z:\\WEB\\CMS",
+                          "Bindings":  [
+                                           {
+                                               "Protocol":  "https",
+                                               "BindingInformation":  "*:443:cms.com"
+                                           },
+                                           {
+                                               "Protocol":  "http",
+                                               "BindingInformation":  "*:80:"
+                                           }
+                                       ],
+                          "Type":  "IIS Website",
+                          "AppPool":  "N/A",
+                          "Applications":  [
+
+                                           ]
+                      },
+                      {
+                          "Name":  "MyFTP",
+                          "ID":  4,
+                          "State":  "Started",
+                          "PhysicalPath":  "Z:\\FTP",
+                          "Bindings":  [
+                                           {
+                                               "Protocol":  "ftp",
+                                               "BindingInformation":  "*:21:"
+                                           }
+                                       ],
+                          "Type":  "IIS Website",
+                          "AppPool":  "N/A",
+                          "Applications":  [
+
+                                           ]
+                      },
+                      {
+                          "Name":  "WEBSERVICES",
+                          "ID":  8,
+                          "State":  "Started",
+                          "PhysicalPath":  "Z:\\WEBSERVICES\\wwwroot",
+                          "Bindings":  [
+                                           {
+                                               "Protocol":  "http",
+                                               "BindingInformation":  "*:8080:"
+                                           },
+                                           {
+                                               "Protocol":  "https",
+                                               "BindingInformation":  "*:443:webservices.cms.com"
+                                           }
+                                       ],
+                          "Type":  "IIS Website",
+                          "AppPool":  "N/A",
+                          "Applications":  [
+                                               {
+                                                   "Path":  "/content",
+                                                   "ApplicationPool":  "CMS-CONTENT",
+                                                   "VirtualDirectories":  {
+
+                                                                          }
+                                               },
+                                               {
+                                                   "Path":  "/membership",
+                                                   "ApplicationPool":  "CMS-MEMBERSHIP",
+                                                   "VirtualDirectories":  {
+
+                                                                          }
+                                               }
+                                           ]
+                      }
+                  ],
+        "IPs":  [
+                    {
+                        "IP":  "10.10.10.42",
+                        "IsPrimary":  true
+                    }
+                ],
+        "PSComputerName":  "MYWEBCOMPUTER",
+        "RunspaceId":  "3DBFB7DF-2AC6-4DE1-ABDE-E8AF4594E8A3",
+        "PSShowComputerName":  true
+    }
+]
+
