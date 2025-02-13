@@ -1,0 +1,168 @@
+<#
+.SYNOPSIS
+   Collects detailed IIS configuration information from one or more remote servers.
+.DESCRIPTION
+   For each specified server, the script gathers:
+     - Server details (name, all IPv4 addresses with one marked as primary)
+     - IIS Websites, their bindings, root physical paths, and any applications/virtual directories
+     - FTP sites (if any)
+     - Application Pools (name, identity, CLR version, enable32Bit setting, state, etc.)
+   The results are output as JSON.
+.PARAMETER ServerNames
+   An array of server names to query. If omitted, the script uses the local computer.
+.EXAMPLE
+   .\Get-IISInventory.ps1 -ServerNames "DEV", "VAL", "PROD"
+#>
+param(
+    [Parameter(Mandatory=$false)]
+    [string[]]$ServerNames = $env:COMPUTERNAME
+)
+
+function Get-RemoteIISInfo {
+    param(
+        [string]$ComputerName
+    )
+
+    $scriptBlock = {
+        # Import the WebAdministration module
+        Import-Module WebAdministration -ErrorAction SilentlyContinue
+
+        # Create a server info object
+        $serverInfo = @{
+            ServerName = $env:COMPUTERNAME
+            IPs        = @()
+            Sites      = @()
+            AppPools   = @()
+        }
+
+        # --- Get IP addresses ---
+        try {
+            $addresses = [System.Net.Dns]::GetHostEntry($env:COMPUTERNAME).AddressList |
+                Where-Object { $_.AddressFamily -eq 'InterNetwork' }
+            $i = 0
+            foreach ($addr in $addresses) {
+                $serverInfo.IPs += [PSCustomObject]@{
+                    IP        = $addr.ToString()
+                    IsPrimary = ($i -eq 0)
+                }
+                $i++
+            }
+        } catch {
+            $serverInfo.IPs += [PSCustomObject]@{
+                IP        = "Unable to resolve IP"
+                IsPrimary = $true
+            }
+        }
+
+        # --- Get Application Pools ---
+        $appPools = Get-ChildItem IIS:\AppPools | ForEach-Object {
+            [PSCustomObject]@{
+                Name         = $_.Name
+                Identity     = $_.processModel.userName
+                CLRVersion   = $_.managedRuntimeVersion
+                Enable32Bit  = $_.enable32BitAppOnWin64
+                State        = $_.state
+                # Additional settings can be added here if desired.
+            }
+        }
+        $serverInfo.AppPools = $appPools
+
+        # --- Get IIS Websites ---
+        $webSites = Get-Website | ForEach-Object {
+            # Gather binding details
+            $siteBindings = @()
+            foreach ($b in $_.Bindings.Collection) {
+                $siteBindings += [PSCustomObject]@{
+                    Protocol             = $b.protocol
+                    BindingInformation   = $b.bindingInformation
+                }
+            }
+            
+            # For a website, try to get the root application ("/") info
+            $rootApp = Get-WebApplication -Site $_.Name -Name "/" -ErrorAction SilentlyContinue
+            if ($rootApp) {
+                $appPoolName  = $rootApp.ApplicationPool
+                $physicalPath = $rootApp.physicalPath
+            }
+            else {
+                $appPoolName  = $null
+                $physicalPath = $_.PhysicalPath
+            }
+
+            # Get additional applications (web apps, which include virtual directories)
+            $applications = @()
+            $apps = Get-WebApplication -Site $_.Name -ErrorAction SilentlyContinue
+            foreach ($app in $apps) {
+                $vdirs = Get-WebVirtualDirectory -Site $_.Name -Application $app.Path -ErrorAction SilentlyContinue | ForEach-Object {
+                    [PSCustomObject]@{
+                        Path         = $_.Path
+                        PhysicalPath = $_.PhysicalPath
+                    }
+                }
+                $applications += [PSCustomObject]@{
+                    Path              = $app.Path
+                    ApplicationPool   = $app.ApplicationPool
+                    VirtualDirectories= $vdirs
+                }
+            }
+            
+            [PSCustomObject]@{
+                Name         = $_.Name
+                ID           = $_.ID
+                State        = $_.State
+                PhysicalPath = $physicalPath
+                Bindings     = $siteBindings
+                Type         = "IIS Website"
+                AppPool      = $appPoolName
+                Applications = $applications
+            }
+        }
+
+        # --- Get FTP Sites (if any) ---
+        $ftpSites = @()
+        try {
+            $ftpSites = Get-WebFtpSite -ErrorAction Stop | ForEach-Object {
+                $ftpBindings = @()
+                foreach ($b in $_.Bindings.Collection) {
+                    $ftpBindings += [PSCustomObject]@{
+                        Protocol           = $b.protocol
+                        BindingInformation = $b.bindingInformation
+                    }
+                }
+                [PSCustomObject]@{
+                    Name         = $_.Name
+                    State        = $_.State
+                    PhysicalPath = $_.PhysicalPath
+                    Bindings     = $ftpBindings
+                    Type         = "FTP Site"
+                }
+            }
+        } catch {
+            # If the command fails, there might be no FTP sites or the module isn't available.
+        }
+        
+        # Combine IIS Websites and FTP sites
+        $serverInfo.Sites = $webSites + $ftpSites
+
+        return $serverInfo
+    }
+
+    try {
+        $result = Invoke-Command -ComputerName $ComputerName -ScriptBlock $scriptBlock -ErrorAction Stop
+        return $result
+    } catch {
+        Write-Error "Failed to get IIS info from $ComputerName: $_"
+    }
+}
+
+# --- Main Execution ---
+$allServerInfo = @()
+foreach ($server in $ServerNames) {
+    $info = Get-RemoteIISInfo -ComputerName $server
+    if ($info) {
+        $allServerInfo += $info
+    }
+}
+
+# Output the complete result as JSON
+$allServerInfo | ConvertTo-Json -Depth 6
