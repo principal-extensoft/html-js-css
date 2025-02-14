@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Surveyor</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      padding-top: 60px;
+      background: #f8f9fa;
+      font-family: Garamond;
+      font-size: 14px;
+    }
+    /* Navbar shadow */
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* Sidebar styling */
+    #sidebar {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #sidebar .card {
+      margin-bottom: 1rem;
+    }
+    #recordList li {
+      cursor: pointer;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    #recordList li.selected {
+      background-color: #007bff;
+      color: white;
+    }
+	#mainContent.disabled {
+	  pointer-events: none;
+	  opacity: 0.5;
+	}
+    /* Treeview styling */
+    .treeview ul {
+      list-style-type: none;
+      padding-left: 20px;
+    }
+    .treeview li {
+      position: relative;
+      margin: 2px 0;
+    }
+    .tree-toggle {
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .tree-collapsed > ul {
+      display: none;
+    }
+    #rawJsonTextarea {
+      width: 100%;
+      height: 60vh;
+      font-family: monospace;
+    }
+    /* Card enhancements */
+    .card {
+      border: none;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar/Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Surveyor</a>
+    </div>
+  </nav>
+
+  <!-- Main container -->
+  <div class="container-fluid mt-3">
+    <div class="row">
+      <!-- Left Sidebar -->
+      <div id="sidebar" class="col-md-3 p-3">
+        <div class="card">
+          <div class="card-header">
+            Actions
+          </div>
+          <div class="card-body">
+            <button id="uploadBtn" class="btn btn-light me-2"><i class="fa fa-upload"></i> Upload</button>
+            <button id="downloadBtn" class="btn btn-light" disabled><i class="fa fa-download"></i> Download</button>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            Records
+          </div>
+          <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+            <ul id="recordList" class="list-unstyled mb-0"></ul>
+          </div>
+        </div>
+      </div>
+      <!-- Main Content Area -->
+      <div class="col-md-9 p-3">
+        <div id="mainContent" class="card disabled">
+          <div class="card-body">
+            <ul class="nav nav-tabs" id="tabMenu" role="tablist">
+              <!-- First tab: Tabular view -->
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tabular-tab-btn" data-bs-toggle="tab" data-bs-target="#tabularTab" type="button" role="tab">Tabular</button>
+              </li>
+              <!-- Second tab: Treeview -->
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="treeview-tab-btn" data-bs-toggle="tab" data-bs-target="#treeviewTab" type="button" role="tab">Treeview</button>
+              </li>
+              <!-- Third tab: Raw JSON -->
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rawjson-tab-btn" data-bs-toggle="tab" data-bs-target="#rawjsonTab" type="button" role="tab">Raw JSON</button>
+              </li>
+            </ul>
+            <div class="tab-content mt-3">
+              <!-- Tab 1: Tabular view -->
+              <div class="tab-pane fade show active" id="tabularTab" role="tabpanel">
+                <div class="mb-3">
+                  <label for="serverSelect" class="form-label">Select Server:</label>
+                  <select id="serverSelect" class="form-select"></select>
+                </div>
+                <div class="mb-4">
+                  <div class="card mb-3">
+                    <div class="card-header">AppPools</div>
+                    <div class="card-body p-0">
+                      <table class="table table-bordered mb-0" id="appPoolsTable">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Name</th>
+                            <th>Identity</th>
+                            <th>CLR Version</th>
+                            <th>32-bit Enabled</th>
+                            <th>State</th>
+                          </tr>
+                        </thead>
+                        <tbody></tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-header">Sites</div>
+                    <div class="card-body p-0">
+                      <table class="table table-bordered mb-0" id="sitesTable">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Name</th>
+                            <th>ID</th>
+                            <th>State</th>
+                            <th>Physical Path</th>
+                            <th>Bindings</th>
+                            <th>AppPool</th>
+                          </tr>
+                        </thead>
+                        <tbody></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Tab 2: Treeview -->
+              <div class="tab-pane fade" id="treeviewTab" role="tabpanel">
+                <div id="treeview" class="treeview"></div>
+              </div>
+              <!-- Tab 3: Raw JSON -->
+              <div class="tab-pane fade" id="rawjsonTab" role="tabpanel">
+                <button id="copyBtn" class="btn btn-secondary mb-2"><i class="fa fa-copy"></i> Copy</button>
+                <textarea id="rawJsonTextarea" class="form-control" readonly></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom Script -->
+  <script>
+    // IndexedDB Setup
+    const dbName = "SurveyorDB";
+    const storeName = "records";
+    let db;
+    let selectedRecordId = null;
+    
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onerror = event => {
+          console.error("IndexedDB error:", event);
+          reject(event);
+        };
+        request.onsuccess = event => {
+          db = event.target.result;
+          resolve(db);
+        };
+        request.onupgradeneeded = event => {
+          db = event.target.result;
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName, { keyPath: "id" });
+          }
+        };
+      });
+    }
+
+    function addRecord(record) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        const request = store.add(record);
+        request.onsuccess = () => resolve();
+        request.onerror = e => reject(e);
+      });
+    }
+
+    function getAllRecords() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = e => reject(e);
+      });
+    }
+
+    function deleteRecord(id) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = e => reject(e);
+      });
+    }
+
+    // Utility Functions
+    function generateGUID() {
+      // Generate a GUID and return first 6 characters
+      const guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+      });
+      return guid.substring(0, 6);
+    }
+
+    function extractAtFromFilename(filename) {
+      // Assume filename format: {date}.Get-IISInventory...
+      const parts = filename.split(".Get-IISInventory");
+      return parts[0]; // date part
+    }
+
+    function extractServersFromData(data) {
+      // data is an array of server objects with "ServerName" field.
+      const servers = data.map(item => item.ServerName).filter(Boolean);
+      return [...new Set(servers)].join(", ");
+    }
+
+    // Treeview generation (recursive)
+    function createTreeView(obj) {
+      const ul = document.createElement("ul");
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const li = document.createElement("li");
+          let displayKey = key; // default label is the key
+          const value = obj[key];
+          // If the parent is an array, override label if "ServerName" or "Name" exists
+		  if (Array.isArray(obj)) {
+			  if (typeof value === "object" && value !== null) {
+				if (value.ServerName) {
+				  displayKey = value.ServerName;
+				} else if (value.Name) {
+				  displayKey = value.Name;
+				} else if (value.IP) {
+				  displayKey = value.IP;
+				}
+			  }
+			}
+
+          if (typeof value === "object" && value !== null) {
+            // Determine if node has children
+            let hasChildren = false;
+            if (Array.isArray(value)) {
+              hasChildren = value.length > 0;
+            } else {
+              hasChildren = Object.keys(value).length > 0;
+            }
+            if (hasChildren) {
+              // Create toggle control; initially collapsed
+              const toggle = document.createElement("span");
+              toggle.className = "tree-toggle me-1";
+              toggle.innerHTML = '<i class="fa fa-plus-square"></i>';
+              li.classList.add("tree-collapsed");
+              toggle.onclick = function() {
+                if (li.classList.contains("tree-collapsed")) {
+                  li.classList.remove("tree-collapsed");
+                  toggle.innerHTML = '<i class="fa fa-minus-square"></i>';
+                } else {
+                  li.classList.add("tree-collapsed");
+                  toggle.innerHTML = '<i class="fa fa-plus-square"></i>';
+                }
+              };
+              li.appendChild(toggle);
+            }
+            li.appendChild(document.createTextNode(displayKey + ":"));
+            li.appendChild(createTreeView(value));
+          } else {
+            li.textContent = displayKey + ": " + value;
+          }
+          ul.appendChild(li);
+        }
+      }
+      return ul;
+    }
+
+    // Tabular view functions
+    function updateTabularView(record) {
+      // record.Data is an array of server objects.
+      var serverSelect = document.getElementById("serverSelect");
+      serverSelect.innerHTML = "";
+      if (!record.Data || record.Data.length === 0) {
+        serverSelect.innerHTML = "<option>No servers found</option>";
+        return;
+      }
+      // Build mapping of unique servers using ServerName
+      var servers = {};
+      record.Data.forEach(function(s) {
+        if (s.ServerName) {
+          servers[s.ServerName] = s;
+        }
+      });
+      // Populate select options
+      for (var key in servers) {
+        var option = document.createElement("option");
+        option.value = key;
+        option.textContent = key;
+        serverSelect.appendChild(option);
+      }
+      // When selection changes, update tables.
+      serverSelect.onchange = function() {
+        updateServerTables(serverSelect.value, servers);
+      };
+      // Also update tables for first option.
+      updateServerTables(serverSelect.value, servers);
+    }
+
+    function updateServerTables(serverName, servers) {
+      var serverObj = servers[serverName];
+      var appPoolsTableBody = document.querySelector("#appPoolsTable tbody");
+      var sitesTableBody = document.querySelector("#sitesTable tbody");
+      appPoolsTableBody.innerHTML = "";
+      sitesTableBody.innerHTML = "";
+      if (!serverObj) return;
+      // Populate AppPools table
+      if (serverObj.AppPools && Array.isArray(serverObj.AppPools)) {
+        serverObj.AppPools.forEach(function(pool) {
+          var row = document.createElement("tr");
+          row.innerHTML = "<td>" + pool.Name + "</td>" +
+                          "<td>" + (pool.Identity || "") + "</td>" +
+                          "<td>" + (pool.CLRVersion || "") + "</td>" +
+                          "<td>" + (pool.Enable32Bit ? "Yes" : "No") + "</td>" +
+                          "<td>" + (pool.State || "") + "</td>";
+          appPoolsTableBody.appendChild(row);
+        });
+      }
+      // Populate Sites table
+      if (serverObj.Sites && Array.isArray(serverObj.Sites)) {
+        serverObj.Sites.forEach(function(site) {
+          var bindings = "";
+          if (site.Bindings && Array.isArray(site.Bindings)) {
+            bindings = site.Bindings.map(function(b) {
+              return b.Protocol + ": " + b.BindingInformation;
+            }).join(", ");
+          }
+          var row = document.createElement("tr");
+          row.innerHTML = "<td>" + site.Name + "</td>" +
+                          "<td>" + site.ID + "</td>" +
+                          "<td>" + site.State + "</td>" +
+                          "<td>" + site.PhysicalPath + "</td>" +
+                          "<td>" + bindings + "</td>" +
+                          "<td>" + (site.AppPool || "") + "</td>";
+          sitesTableBody.appendChild(row);
+        });
+      }
+    }
+
+    // UI Functions
+    function refreshRecordList() {
+      getAllRecords().then(records => {
+        const recordList = document.getElementById("recordList");
+        recordList.innerHTML = "";
+        records.sort((a, b) => a.At.localeCompare(b.At));
+        records.forEach(record => {
+          const li = document.createElement("li");
+          li.classList.add("d-flex", "justify-content-between", "align-items-center");
+          li.setAttribute("data-id", record.id);
+          li.innerHTML = `<span>${record.At}</span>
+                          <button class="btn btn-sm btn-danger delete-btn"><i class="fa fa-trash"></i></button>`;
+          li.onclick = function(e) {
+            if (e.target.closest(".delete-btn")) return;
+            document.querySelectorAll("#recordList li").forEach(item => item.classList.remove("selected"));
+            li.classList.add("selected");
+            selectedRecordId = record.id;
+            document.getElementById("downloadBtn").disabled = false;
+            displayRecord(record);
+          };
+          li.querySelector(".delete-btn").onclick = function(e) {
+            e.stopPropagation();
+            deleteRecord(record.id).then(() => {
+              if (record.id === selectedRecordId) {
+                selectedRecordId = null;
+                document.getElementById("downloadBtn").disabled = true;
+                document.getElementById("treeview").innerHTML = "";
+                document.getElementById("rawJsonTextarea").value = "";
+                document.getElementById("serverSelect").innerHTML = "";
+                document.querySelector("#appPoolsTable tbody").innerHTML = "";
+                document.querySelector("#sitesTable tbody").innerHTML = "";
+              }
+              refreshRecordList();
+            });
+          };
+          recordList.appendChild(li);
+        });
+      });
+    }
+
+    function displayRecord(record) {
+	  // Enable the main content area
+	  document.getElementById("mainContent").classList.remove("disabled");
+      // Display in Treeview tab
+      const treeviewDiv = document.getElementById("treeview");
+      treeviewDiv.innerHTML = "";
+      const tree = createTreeView(record.Data);
+      treeviewDiv.appendChild(tree);
+      // Display in Raw JSON tab
+      const rawJsonTextarea = document.getElementById("rawJsonTextarea");
+      rawJsonTextarea.value = JSON.stringify(record.Data, null, 2);
+      // Update Tabular view (select & tables)
+      updateTabularView(record);
+    }
+
+    // Event Handlers
+    document.getElementById("uploadBtn").onclick = function() {
+      document.getElementById("fileInput").click();
+    };
+
+    document.getElementById("fileInput").onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const jsonData = JSON.parse(evt.target.result);
+          // Build record
+          const record = {
+            id: generateGUID(),
+            At: extractAtFromFilename(file.name),
+            Servers: extractServersFromData(jsonData),
+            Data: jsonData,
+            fileName: file.name
+          };
+          addRecord(record).then(() => {
+            refreshRecordList();
+          });
+        } catch (err) {
+          alert("Error parsing JSON file: " + err);
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    document.getElementById("downloadBtn").onclick = function() {
+      if (!selectedRecordId) return;
+      const transaction = db.transaction([storeName], "readonly");
+      const store = transaction.objectStore(storeName);
+      const request = store.get(selectedRecordId);
+      request.onsuccess = function() {
+        const record = request.result;
+        const dataStr = JSON.stringify(record.Data, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = record.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+    };
+
+    document.getElementById("copyBtn").onclick = function() {
+      const textarea = document.getElementById("rawJsonTextarea");
+      textarea.select();
+      document.execCommand("copy");
+      alert("Copied to clipboard!");
+    };
+
+    // Initialize the app
+    openDB().then(refreshRecordList).catch(console.error);
+  </script>
+</body>
+</html>
