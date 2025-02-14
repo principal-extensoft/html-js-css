@@ -24,6 +24,31 @@
       max-height: 80vh;
       overflow-y: auto;
     }
+	
+	.navbar,
+	.card-header,
+	nav-tabs .nav-link.active,
+	.btn-primary {
+		background-color: #2E8B57 !important;
+		border-color: #2E8B57 !important;
+		color: #fff !important;
+	}
+	.nav-tabs .nav-link {
+		color: #2E8B57;
+		font-weight: 500;
+		border: 1px solid transparent;
+		border-bottom: none;
+	}
+	.nav-tabs .nav-link.active {
+		font-weight: bold;
+		border-color: #28B57;
+	}
+	.card-header {
+		background-color: #2E8B57;
+		color: #fff;
+		font-size: 1.1rem;
+	}
+	
     #sidebar .card {
       margin-bottom: 1rem;
     }
@@ -33,9 +58,13 @@
       border-bottom: 1px solid #eee;
     }
     #recordList li.selected {
-      background-color: #007bff;
+      background-color: #2E8B57b0;
       color: white;
     }
+	#recordList li:hover {
+	  background-color: #2e8b5794;
+	  font-weight: bold;
+	}
 	#mainContent.disabled {
 	  pointer-events: none;
 	  opacity: 0.5;
