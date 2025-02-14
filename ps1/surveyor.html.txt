@@ -171,6 +171,12 @@
               </div>
               <!-- Tab 2: Treeview -->
               <div class="tab-pane fade" id="treeviewTab" role="tabpanel">
+			    <div class="d-flex mb-2">
+				  <button id="toggleTreeBtn" class="btn btn-secondary">
+				    <i class="fa fa-plus-square"></i> Expand All
+				  </button>
+				
+				</div>
                 <div id="treeview" class="treeview"></div>
               </div>
               <!-- Tab 3: Raw JSON -->
@@ -266,6 +272,29 @@
       const servers = data.map(item => item.ServerName).filter(Boolean);
       return [...new Set(servers)].join(", ");
     }
+	
+	let allExpanded = false;
+	function setAllTreeNodes(expand){
+		const toggles = document.querySelectorAll('.tree-toggle');
+		toggles.forEach(function(toggle){
+			const li = toggle.parentElement;
+			if(expand){
+				li.classList.remove("tree-collapsed");
+				toggle.innerHTML = '<i class="fa fa-minus-square"></i>';
+			} else {
+				li.classList.add("tree-collapsed");
+				toggle.innerHTML = '<i class="fa fa-plus-square"></i>';
+			}
+		});
+	}
+	
+	document.getElementById("toggleTreeBtn").onclick = function(){
+		allExpanded = !allExpanded;
+		setAllTreeNodes(allExpanded);
+		this.innerHTML = allExpanded
+			? '<i class="fa fa-minus-square"></i> Collapse All'
+			: '<i class="fa fa-plus-square"></i> Expand All';
+		};
 
     // Treeview generation (recursive)
     function createTreeView(obj) {
@@ -284,6 +313,8 @@
 				  displayKey = value.Name;
 				} else if (value.IP) {
 				  displayKey = value.IP;
+				} else if (value.Protocol) {
+				  displayKey = value.Protocol;
 				}
 			  }
 			}
