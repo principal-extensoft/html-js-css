@@ -48,6 +48,10 @@
 		color: #fff;
 		font-size: 1.1rem;
 	}
+	
+	.ml-7 {
+		margin-left: 7rem;
+	}
 
 	#rawJsonTextarea {
 		font-size: 0.7rem;
@@ -121,7 +125,7 @@
       background: #fff;
       padding: 20px;
       border-radius: 8px;
-      max-width: 500px;
+      max-width: 800px;
       width: 90%;
       position: relative;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -138,6 +142,56 @@
       font-size: 1.5rem;
       cursor: pointer;
     }
+	
+	.kvp-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.kvp-item {
+		display: flex;
+		align-items: flex-start;
+	}
+	.kvp-key {
+		width: 7rem;
+		text-align: right;
+		flex-shrink: 0;
+	}
+	.kvp-value {
+		margin-left: 3rem;
+		flex-grow:1;
+		font-weight: bold;
+	}
+	.kvp-list {
+		margin-left: 3rem;
+		padding-left: 0;
+		list-style-type: none;		
+	}
+	.kvp-list li {
+		padding-left: 0;
+	}
+	.kvp-list li span {
+		color: gray;
+	}
+	.kvp-list li strong {
+		padding-left: 2rem;
+	}
+	button.binding-details {
+		background-color: #85c47a;
+	}
+	button.binding-details:hover {
+		background-color: #aaf79c;
+	}
+	button.binding-details i {
+		font-size: 0.7rem;
+	}
+	.protocol-http {
+		margin-left: 2.75rem;
+	}
+	.protocol-https {
+		margin-left: 1rem;
+	}
+	
   </style>
 </head>
 <body>
@@ -486,10 +540,13 @@
           var bindings = "";
           if (site.Bindings && Array.isArray(site.Bindings)) {
             bindings = site.Bindings.map(function(b) {
-              var text = b.Protocol + ": " + b.BindingInformation;
+			  var text = '';
+			  var bindingClass = 'protocol-http';
               if (b.CertificateInfo) {
-                text += ' <button class="btn btn-sm btn-info binding-details" data-cert=\'' + JSON.stringify(b.CertificateInfo) + '\'>Details</button>';
+				bindingClass = 'protocol-https';
+                text += ' <button class="btn btn-sm btn-info binding-details" data-cert=\'' + JSON.stringify(b.CertificateInfo) + '\'><i class="fas fa-magnifying-glass"></i></button>';
               }
+			  text += "<span class='" + bindingClass + "'>" + `${b.Protocol}: ${b.BindingInformation}<span>`;
               return text;
             }).join("<br>");
           }
@@ -624,24 +681,41 @@
       var certData = e.target.closest(".binding-details").getAttribute("data-cert");
       if (certData) {
         var certInfo = JSON.parse(certData);
+		
+		var ulHtml = "<ul class='kvp-list'>" + (certInfo.SAN || '')
+			.split(/\r?\n/)
+			.map(item => item.trim())
+			.filter(item => item !== "")
+			.sort((a,b) => a.localeCompare(b))
+			//.map(item => `<li><strong>${item}</strong></li>`)
+			.map(item => {
+				let [key,value] = item.split('=');
+				key = key ? key.trim(): '';
+				value = value ? value.trim() : '';
+				return `<li><span>${key}</span>: <strong>${value}</strong></li>`;
+			})
+			.join('') + '</ul>';
+		
         //let sanHtml = certInfo.SAN.replace(/(?:\r\n|\r|\n)/g, '<br>');
-        let sanItems= certInfo.SAN.split(/\r\n/);
-        var ulHtml = '<ul>';
-        sanItems.forEach(function(item){
-          if(item.trim() !== ""){
-            ulHtml += '<li>' + item + '</li>';
-          }
-        });
-        ulHtml += '</ul>';
-
-        var html = "<p><strong>Subject:</strong> " + certInfo.Subject + "</p>" +
-                    "<p><strong>Issuer:</strong> " + certInfo.Issuer + "</p>" +
-                    "<p><strong>Not Before:</strong> " + certInfo.NotBefore + "</p>" +
-                    "<p><strong>Not After:</strong> " + certInfo.NotAfter + "</p>" +
-                    "<p><strong>Thumbprint:</strong> " + certInfo.Thumbprint + "</p>" +
-                    "<p><strong>Friendly Name:</strong> " + certInfo.FriendlyName + "</p>" +
-                    "<p><strong>Serial Number:</strong> " + certInfo.SerialNumber + "</p>" +
-                    "<p><strong>SubjectAltNames:</strong> " + ulHtml + "</p>";
+        //let sanItems= certInfo.SAN.split(/\r\n/);
+        //var ulHtml = '<ul>';
+        //sanItems.forEach(function(item){
+        //  if(item.trim() !== ""){
+        //    ulHtml += '<li>' + item + '</li>';
+        //  }
+        //});
+        //ulHtml += '</ul>';
+		
+        var html = "<div class='kvp-container'>" +
+					"<div class='kvp-item'><div class='kvp-key'>Subject:</div><span class='kvp-value'> " + certInfo.Subject + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Issuer:</div><span class='kvp-value'> " + certInfo.Issuer + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Not Before:</div><span class='kvp-value'> " + certInfo.NotBefore + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Not After:</div><span class='kvp-value'> " + certInfo.NotAfter + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Thumbprint:</div><span class='kvp-value'> " + certInfo.Thumbprint + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Friendly Name:</div><span class='kvp-value'> " + certInfo.FriendlyName + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>Serial Number:</div><span class='kvp-value'> " + certInfo.SerialNumber + "</span></div>" +
+                    "<div class='kvp-item'><div class='kvp-key'>SubjectAltNames:</div>" + ulHtml + "</div></div>";
+					
         document.getElementById("certDetails").innerHTML = html;
         document.getElementById("certModal").style.display = "flex";
       }
