@@ -1,0 +1,69 @@
+<# 
+    Execute-GetHttp.ps1
+    Wrapper script to execute multiple GET calls by invoking the primary script (ExecuteHttpGet.ps1)
+    using configuration defined in a JSON file.
+#>
+
+# Define the config file path relative to the current script directory
+$configFilePath = Join-Path -Path $PSScriptRoot -ChildPath "Execute-GetHttp.config.json"
+
+if (-not (Test-Path $configFilePath)) {
+    Write-Error "Configuration file not found: $configFilePath"
+    exit 1
+}
+
+# Read and convert the JSON configuration file
+try {
+    $config = Get-Content -Path $configFilePath -Raw | ConvertFrom-Json
+} catch {
+    Write-Error "Failed to read or parse configuration file: $_"
+    exit 1
+}
+
+if (-not $config.endpoints) {
+    Write-Error "Configuration file does not contain an 'endpoints' array."
+    exit 1
+}
+
+# Define the path to the primary script. Adjust the filename if needed.
+$primaryScriptPath = Join-Path -Path $PSScriptRoot -ChildPath "ExecuteHttpGet.ps1"
+
+foreach ($endpoint in $config.endpoints) {
+    Write-Host "Executing GET for endpoint: $($endpoint.endpointUrl) (moniker: $($endpoint.moniker))" -ForegroundColor Cyan
+
+    # Create a hashtable of parameters for the primary script.
+    $scriptParams = @{
+        moniker     = $endpoint.moniker
+        endpointUrl = $endpoint.endpointUrl
+        logLevel    = $endpoint.logLevel
+        tags        = $endpoint.tags
+    }
+    
+    # Optional: include a configuration parameter if defined in the endpoint
+    if ($endpoint.configuration) {
+        $scriptParams.configuration = $endpoint.configuration
+    }
+    
+    # Execute the primary script with the parameters
+    & $primaryScriptPath @scriptParams
+}
+
+
+---
+
+{
+    "endpoints": [
+        {
+            "moniker": "api-healthcheck",
+            "endpointUrl": "http://mywebsite/api/health-check",
+            "logLevel": "info",
+            "tags": "health,api"
+        },
+        {
+            "moniker": "service-status",
+            "endpointUrl": "http://otherservice/api/status",
+            "logLevel": "error",
+            "tags": "status,service"
+        }
+    ]
+}
