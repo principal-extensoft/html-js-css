@@ -77,3 +77,67 @@ Get-IISSiteFolders | ForEach-Object {
     }
 }
 
+function Test-DbConnection {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string] $ConnectionString,
+        [Parameter()]
+        [ValidateSet('SqlServer','OleDb','Odbc')]
+        [string] $Provider = 'SqlServer',
+        [int] $TimeoutSeconds = 5
+    )
+
+    switch ($Provider) {
+        'SqlServer' {
+            # ensure a reasonable timeout
+            $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder($ConnectionString)
+            $builder.ConnectTimeout = $TimeoutSeconds
+
+            $conn = [System.Data.SqlClient.SqlConnection]::new($builder.ConnectionString)
+        }
+        'OleDb' {
+            $conn = New-Object System.Data.OleDb.OleDbConnection $ConnectionString
+            $conn.ConnectionTimeout = $TimeoutSeconds
+        }
+        'Odbc' {
+            $conn = New-Object System.Data.Odbc.OdbcConnection $ConnectionString
+            $conn.ConnectionTimeout = $TimeoutSeconds
+        }
+    }
+
+    try {
+        $conn.Open()
+        $conn.Close()
+        [PSCustomObject]@{
+            ConnectionString = $ConnectionString
+            Provider         = $Provider
+            Status           = 'OK'
+            Error            = $null
+        }
+    }
+    catch {
+        [PSCustomObject]@{
+            ConnectionString = $ConnectionString
+            Provider         = $Provider
+            Status           = 'FAILED'
+            Error            = $_.Exception.Message
+        }
+    }
+}
+
+
+$allConnStrings = @(
+  @{ Name='AppDb';    Connection='Server=sql1;Database=Foo;User Id=…;Pwd=…;' },
+  @{ Name='LoggingDb';Connection='Server=sql2;Database=Bar;…'; }
+)
+
+
+$results = foreach ($cs in $allConnStrings) {
+    Test-DbConnection `
+      -ConnectionString $cs.Connection `
+      -Provider 'SqlServer' `
+      -TimeoutSeconds 3 |
+    Select-Object *, @{Name='Name';Expression={$cs.Name}}
+}
+
+$results | Format-Table Name, Provider, Status, Error
