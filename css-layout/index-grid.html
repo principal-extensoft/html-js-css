@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grid Layout with Collapsible Sidebar</title>
+  <style>
+    :root {
+      --sidebar-open: 16rem;
+      --sidebar-closed: 3rem;
+    }
+
+    /* hide the checkbox */
+    #sidebar-toggle { display: none; }
+
+    /* base grid: sidebar | main */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-open) 1fr;
+      height: 100vh;
+      transition: grid-template-columns .3s;
+    }
+
+    /* collapse sidebar */
+    #sidebar-toggle:checked ~ .layout {
+      grid-template-columns: var(--sidebar-closed) 1fr;
+    }
+
+    /* sidebar styling */
+    .sidebar {
+      position: relative;
+      background: #2c3e50;
+      color: #ecf0f1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 0.5rem;
+    }
+
+    /* toggle button always on left */
+    .toggle-btn {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      background: #e74c3c;
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      border-radius: 3px;
+      font-family: sans-serif;
+      z-index: 1;
+    }
+
+    /* nav grouping */
+    .sidebar h2 {
+      font-size: 0.8rem;
+      margin: 1.5rem 0 0.5rem;
+      text-transform: uppercase;
+      color: #95a5a6;
+      transition: opacity .3s;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li {
+      display: flex;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .icon {
+      width: 1.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .text {
+      margin-left: 0.5rem;
+      transition: opacity .3s;
+      white-space: nowrap;
+    }
+
+    /* hide text & headings when collapsed */
+    #sidebar-toggle:checked ~ .layout .sidebar .text,
+    #sidebar-toggle:checked ~ .layout .sidebar h2 {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* main area */
+    .main {
+      display: flex;
+      flex-direction: column;
+    }
+    .main-header {
+      height: 3rem;
+      background: #ecf0f1;
+      border-bottom: 1px solid #bdc3c7;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+    }
+    .content {
+      flex: 1;
+      padding: 1rem;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- checkbox + label -->
+  <input type="checkbox" id="sidebar-toggle">
+  <label for="sidebar-toggle" class="toggle-btn">☰</label>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Group A</h2>
+      <ul>
+        <li><span class="icon">🏠</span><span class="text">Home</span></li>
+        <li><span class="icon">📊</span><span class="text">Dashboard</span></li>
+      </ul>
+      <h2>Group B</h2>
+      <ul>
+        <li><span class="icon">⚙️</span><span class="text">Settings</span></li>
+        <li><span class="icon">👤</span><span class="text">Profile</span></li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <header class="main-header">Grid Header</header>
+      <section class="content">
+        <p>Your main content goes here.</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
