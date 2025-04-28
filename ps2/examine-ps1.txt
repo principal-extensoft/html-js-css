@@ -1,0 +1,79 @@
+$folder = 'C:\inetpub\wwwroot\MySite'
+$jsonPath = Join-Path $folder 'appsettings.json'
+
+if (Test-Path $jsonPath) {
+    # load & parse
+    $cfg = Get-Content $jsonPath -Raw | ConvertFrom-Json
+
+    # 1) connection-strings
+    if ($cfg.ConnectionStrings) {
+        $cfg.ConnectionStrings.PSObject.Properties |
+          ForEach-Object {
+            [PSCustomObject]@{
+              Name  = $_.Name
+              Value = $_.Value
+            }
+          }
+    }
+
+    # 2) any “http…” values buried anywhere
+    $cfg |
+      ConvertTo-Json -Depth 10 |
+      Select-String 'http[s]?://[^\s"\\]+' -AllMatches |
+      ForEach-Object {
+        $_.Matches.Value
+      } |
+      Sort -Unique
+}
+
+
+$folder = 'C:\inetpub\wwwroot\MyClassicSite'
+$configPath = Join-Path $folder 'web.config'
+
+if (Test-Path $configPath) {
+    # load & cast to XML
+    [xml]$xml = Get-Content $configPath
+
+    # 1) <connectionStrings>
+    $xml.configuration.connectionStrings.add |
+      ForEach-Object {
+        [PSCustomObject]@{
+          Name       = $_.name
+          Provider   = $_.providerName
+          Connection = $_.connectionString
+        }
+      }
+
+    # 2) any <endpoint> elements or loose URLs
+    # a) explicit ServiceModel endpoints:
+    $xml.SelectNodes('//system.serviceModel/client/endpoint') |
+      ForEach-Object {
+        [PSCustomObject]@{
+          Address  = $_.address
+          Binding  = $_.binding
+          Contract = $_.contract
+        }
+      }
+
+    # b) fall back to scanning all text for http(s) URLs
+    Get-Content $configPath |
+      Select-String 'http[s]?://[^\s"<>]+' -AllMatches |
+      ForEach-Object { $_.Matches.Value } |
+      Sort -Unique
+}
+
+function Get-IISDependencies {
+    param([string]$Folder)
+
+    # (drop in the JSON+XML logic here, returning objects)
+}
+
+Get-IISSiteFolders | ForEach-Object {
+    [PSCustomObject]@{
+      Site        = $_.Name
+      Folder      = $_.PhysicalPath
+      ConnStrings = (Get-IISDependencies -Folder $_.PhysicalPath | Where Name)
+      Endpoints   = (Get-IISDependencies -Folder $_.PhysicalPath | Where Address)
+    }
+}
+
