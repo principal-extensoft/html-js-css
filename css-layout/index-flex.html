@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flexbox Layout with Collapsible Sidebar</title>
+  <style>
+    :root {
+      --sidebar-open: 16rem;
+      --sidebar-closed: 3rem;
+    }
+
+    /* hide the checkbox */
+    #cb { display: none; }
+
+    /* outer flex: sidebar + main */
+    .container {
+      display: flex;
+      height: 100vh;
+      transition: all .3s;
+    }
+
+    /* sidebar */
+    aside {
+      position: relative;
+      width: var(--sidebar-open);
+      background: #34495e;
+      color: #ecf0f1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 0.5rem;
+      transition: width .3s;
+    }
+
+    /* collapse */
+    #cb:checked ~ .container aside {
+      width: var(--sidebar-closed);
+    }
+
+    /* toggle always left inside sidebar */
+    .toggle {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      background: #e67e22;
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      border-radius: 3px;
+      font-family: sans-serif;
+      z-index: 1;
+    }
+
+    /* nav groups */
+    .nav-group + .nav-group { margin-top: 1.5rem; }
+    .nav-group h3 {
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      color: #95a5a6;
+      transition: opacity .3s;
+    }
+    .nav-group ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .nav-group li {
+      display: flex;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+    .icon { width: 1.5rem; text-align: center; flex-shrink: 0; }
+    .text {
+      margin-left: 0.5rem;
+      transition: opacity .3s;
+      white-space: nowrap;
+    }
+
+    /* hide text & headings when collapsed */
+    #cb:checked ~ .container aside .text,
+    #cb:checked ~ .container aside h3 {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* main area */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      height: 3rem;
+      background: #ecf0f1;
+      border-bottom: 1px solid #bdc3c7;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      flex-shrink: 0;
+    }
+    section {
+      flex: 1;
+      padding: 1rem;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- checkbox + label -->
+  <input type="checkbox" id="cb">
+  <label for="cb" class="toggle">☰</label>
+
+  <div class="container">
+    <aside>
+      <nav>
+        <div class="nav-group">
+          <h3>Group A</h3>
+          <ul>
+            <li><span class="icon">🏠</span><span class="text">Home</span></li>
+            <li><span class="icon">📊</span><span class="text">Dashboard</span></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <h3>Group B</h3>
+          <ul>
+            <li><span class="icon">⚙️</span><span class="text">Settings</span></li>
+            <li><span class="icon">👤</span><span class="text">Profile</span></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <header>Flex Header</header>
+      <section>
+        <p>Your main content goes here.</p>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
