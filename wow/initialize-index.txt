@@ -1,0 +1,102 @@
+
+        protected override void InitializeIndexCommand(SqlCommand command, IParameters parameters)
+        {
+            string baseSelect = @"SELECT
+                p.[Id], p.[OrigamiId], p.[EntityId], p.[NamedInsured], p.[Domain],
+                p.[PolicyType], p.[PolicyNumber], p.[Effective], p.[Year], p.[Month],
+                p.[Disposition], p.[POCId]
+            FROM [dashboard].[Policy] p";
+
+            const string baseCount = "SELECT COUNT(*) FROM [dashboard].[Policy] p";
+
+            // 1) Create and configure builder
+            var builder = new WhereBuilder(command, parameters)
+                .AddIn<string>("lob", "lob.LineOfBusiness", SqlDbType.NVarChar, 30)
+                .AddIn<string>("domain", "p.Domain", SqlDbType.NVarChar, 50)
+                .AddIn<int>("year", "p.Year", SqlDbType.Int);
+
+            // 2) Conditionally adjust SELECT if 'lob' facet present
+            if (builder.KeyExists("lob"))
+            {
+                // Example: add a JOIN to include LOB table
+                baseSelect = baseSelect.Replace("FROM [dashboard].[Policy] p",
+                    "FROM [dashboard].[Policy] p\nJOIN [dashboard].[LineOfBusiness] lob ON lob.PolicyId = p.Id");
+            }
+
+            // 3) One-liner to set up everything else
+            parameters.SetupFacetedQuery(
+                command,
+                baseSelect,
+                baseCount,
+                builder,
+                orderByClause: "p.Effective DESC"
+            );
+        }
+
+
+
+        /*
+        protected override void InitializeIndexCommand(SqlCommand command, IParameters parameters)
+        {
+            // Base SELECT and COUNT statements
+            const string selectStmt = @"SELECT
+                    [Id], [OrigamiId], [EntityId], [NamedInsured], [Domain],
+                    [PolicyType], [PolicyNumber], [Effective], [Year], [Month],
+                    [Disposition], [POCId]
+                FROM [dashboard].[Policy] p";
+
+            const string countStmt =
+                "SELECT COUNT(*) FROM [dashboard].[Policy] p";
+
+            // Configure filters, paging, and count via a single extension call
+            parameters.SetupFacetedQuery(
+                command,
+                selectStmt,
+                countStmt,
+                builder => builder
+                    .AddIn<string>("domain", "p.Domain", SqlDbType.NVarChar, 20)
+                    .AddIn<int>("year", "p.Year", SqlDbType.Int),
+                orderByClause: "p.Effective DESC"
+            );
+        }
+        */
+
+        /*
+        protected override void InitializeIndexCommand(SqlCommand command, IParameters parameters)
+        {
+            // 1) Build the WHERE clause (including the "WHERE " prefix) if any filters exist
+            var builder = new WhereBuilder(command, parameters)
+                .AddIn<string>("domain", "p.Domain", SqlDbType.NVarChar, 50)
+                .AddIn<int>("year", "p.Year", SqlDbType.Int);
+
+            // 2) Main SELECT
+            var sql = new StringBuilder()
+                .AppendLine("SELECT")
+                .AppendLine("  [Id], [OrigamiId], [EntityId], [NamedInsured], [Domain],")
+                .AppendLine("  [PolicyType], [PolicyNumber], [Effective], [Year], [Month],")
+                .AppendLine("  [Disposition], [POCId]")
+                .AppendLine("FROM [dashboard].[Policy] p");
+
+            // 3) Only append WHERE if TryBuild succeeded
+            if (builder.TryBuild(out var whereSql))
+                sql.AppendLine(whereSql);
+
+            // 4) Paging & ordering
+            bool paged = parameters.TryAddPaging(command, sql, null, "p.Effective DESC");
+
+            // 5) If paged, append the COUNT(*) with the same filters
+            if (paged)
+            {
+                sql.AppendLine("SELECT COUNT(*)")
+                   .AppendLine("FROM [dashboard].[Policy] p");
+
+                // Reuse the same WHERE clause
+                if (builder.TryBuild(out whereSql))
+                    sql.AppendLine(whereSql);
+            }
+
+            // 6) Finalize command
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql.ToString();
+        }
+        */
