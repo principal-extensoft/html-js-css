@@ -1,0 +1,109 @@
+using Microsoft.Data.SqlClient;
+using System;
+using System.Data;
+using System.Text;
+using XF.Common;
+
+namespace XF.DataProviders
+{
+    // ----------------------
+    // Extension on IParameters
+    // ----------------------
+    public static class ParametersQueryExtensions
+    {
+        /*
+        /// <summary>
+        /// Builds and executes a parameterized SELECT and optional COUNT query using WhereBuilder.
+        /// </summary>
+        /// <summary>
+        /// Configures and builds a SELECT and optional COUNT query using a WhereBuilder.
+        /// </summary>
+        public static void SetupFacetedQuery(
+            this IParameters parameters,
+            SqlCommand command,
+            string selectSql,
+            string countSql,
+            Action<WhereBuilder> configureBuilder,
+            string orderByClause = null)
+        {
+            var sqlBuilder = new StringBuilder();
+            sqlBuilder.AppendLine(selectSql);
+
+            // Let caller configure which filters to apply
+            var whereBuilder = new WhereBuilder(command, parameters);
+            configureBuilder(whereBuilder);
+
+            // Append WHERE if any filters were added
+            if (whereBuilder.TryBuild(out var whereSql))
+                sqlBuilder.AppendLine(whereSql);
+
+            // Apply ordering and paging
+            bool paged = false;
+            if (!string.IsNullOrEmpty(orderByClause))
+                paged = parameters.TryAddPaging(command, sqlBuilder, null, orderByClause);
+
+            // If paging was applied, append count query
+            if (paged)
+            {
+                sqlBuilder.AppendLine(countSql);
+                if (whereBuilder.TryBuild(out whereSql))
+                    sqlBuilder.AppendLine(whereSql);
+            }
+
+            command.CommandType = CommandType.Text;
+            command.CommandText = sqlBuilder.ToString();
+        }
+        */
+
+        /// <summary>
+        /// Sets up a faceted SELECT and optional COUNT query, using a pre-configured WhereBuilder.
+        /// </summary>
+        public static void SetupFacetedQuery(
+            this IParameters parameters,
+            SqlCommand command,
+            string selectSql,
+            string countSql,
+            WhereBuilder builder,
+            string orderByClause = null)
+        {
+            var sqlBuilder = new StringBuilder();
+            sqlBuilder.AppendLine(selectSql);
+
+            // Append WHERE if any filters were added
+            if (builder.TryBuild(out var whereSql))
+                sqlBuilder.AppendLine(whereSql);
+
+            // Apply ordering and paging
+            bool paged = false;
+            if (!string.IsNullOrEmpty(orderByClause))
+                paged = parameters.TryAddPaging(command, sqlBuilder, null, orderByClause);
+
+            // If paging was applied, append count query
+            if (paged)
+            {
+                sqlBuilder.AppendLine(countSql);
+                if (builder.TryBuild(out whereSql))
+                    sqlBuilder.AppendLine(whereSql);
+            }
+
+            command.CommandType = CommandType.Text;
+            command.CommandText = sqlBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Sets up a faceted SELECT and optional COUNT query, using a configure lambda for WhereBuilder.
+        /// </summary>
+        public static void SetupFacetedQuery(
+            this IParameters parameters,
+            SqlCommand command,
+            string selectSql,
+            string countSql,
+            Action<WhereBuilder> configureBuilder,
+            string orderByClause = null)
+        {
+            var builder = new WhereBuilder(command, parameters);
+            configureBuilder(builder);
+            parameters.SetupFacetedQuery(command, selectSql, countSql, builder, orderByClause);
+        }
+    }
+}
