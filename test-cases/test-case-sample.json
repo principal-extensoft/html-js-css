@@ -1,0 +1,38 @@
+{
+  "id": "TC-001",
+  "title": "Login Flow",
+  "description": "Verify user can log in with valid credentials",
+  "steps": [
+    {
+      "id": "1",
+      "description": "Navigate to login page",
+      "expectedResult": "Login form is displayed",
+      "subSteps": []
+    },
+    {
+      "id": "2",
+      "description": "Enter credentials",
+      "expectedResult": "",
+      "subSteps": [
+        {
+          "id": "2.1",
+          "description": "Enter username",
+          "expectedResult": "Username field accepts input",
+          "subSteps": []
+        },
+        {
+          "id": "2.2",
+          "description": "Enter password",
+          "expectedResult": "Password field accepts input",
+          "subSteps": []
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "description": "Click Submit",
+      "expectedResult": "Dashboard is displayed",
+      "subSteps": []
+    }
+  ]
+}
