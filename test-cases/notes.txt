@@ -1,0 +1,17 @@
+/js
+  /models
+    TestCase.js
+    Step.js
+    TestRun.js      ← (if you separate run vs. template)
+    StepRun.js
+  /services
+    TestCaseService.js  ← handles fetch calls: getAll(), getById(id), create(), update(), delete()
+    TestRunService.js   ← submit execution results
+  /ui
+    TestCaseEditor.js   ← handles authoring UI (create/edit template)
+    TestCaseRunner.js   ← handles running steps, marking status, notes
+    components/
+      StepItem.js       ← renders a single step recursively
+      StepForm.js       ← used in editor to add/edit a step
+      NoteModal.js      ← popup for attaching notes
+  main.js               ← entry point, set up routing (e.g. hash-based), import services & UI modules
