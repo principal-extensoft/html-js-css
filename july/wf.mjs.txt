@@ -1,0 +1,142 @@
+import { StateMachine } from './state-machine.mjs';
+
+/**
+ * Core Workflow module: handles loading FSM definitions,
+ * rendering UI, executing transitions, and synchronizing with API.
+ * Instance state is supplied by the application (no caching in IndexedDB).
+ */
+export class Workflow {
+  /**
+   * @param {object} opts
+   * @param {string} opts.fsmId            - ID of the workflow definition
+   * @param {string} opts.model            - business model name (e.g. 'software-task')
+   * @param {string|number} opts.entityId  - unique entity identifier
+   * @param {string} opts.initialState     - current workflow state for this entity
+   * @param {string|HTMLElement} opts.container - selector or DOM node
+   * @param {IndexedDBProvider} opts.db    - IndexedDB provider instance (for definitions only)
+   * @param {ApiService} opts.api          - ApiService instance
+   * @param {object} [opts.hooks]          - optional lifecycle hooks
+   */
+  constructor({ fsmId, model, entityId, initialState, container, db, api, hooks = {} }) {
+    this.fsmId = fsmId;
+    this.model = model;
+    this.entityId = entityId;
+    this.initialState = initialState;
+    this.container = typeof container === 'string'
+      ? document.querySelector(container)
+      : container;
+    this.db = db;
+    this.api = api;
+    this.hooks = hooks; // { beforeTransition, onTransition, onError }
+    this.stateMachine = null;
+  }
+
+  /** Register a hook: 'beforeTransition', 'onTransition', 'onError' */
+  on(event, handler) {
+    this.hooks[event] = handler;
+  }
+
+  /** Loads definition, initializes FSM, then renders UI */
+  async load() {
+    // 1) Open IndexedDB (definitions only)
+    await this.db.openDatabase(db => {
+      if (!db.objectStoreNames.contains('workflow-definitions')) {
+        db.createObjectStore('workflow-definitions', { keyPath: 'id' });
+      }
+    });
+
+    // 2) Load or fetch FSM definition
+    let fsmDef = await this.db.getById('workflow-definitions', this.fsmId);
+    if (!fsmDef) {
+      fsmDef = await new Promise((res, rej) => {
+        this.api.get(
+          `/api/workflow-definitions/${this.fsmId}`,
+          data => res(data),
+          err => rej(err)
+        );
+      });
+      await this.db.put('workflow-definitions', fsmDef);
+    }
+
+    // 3) Initialize the StateMachine with supplied current state
+    this.stateMachine = new StateMachine(fsmDef.states, fsmDef.transitions);
+    this.stateMachine.setOnStateChange(() => this.render());
+    this.stateMachine.initialize(this.initialState);
+
+    // 4) Initial render
+    this.render();
+  }
+
+  /** Renders current state and available transitions */
+  render() {
+    this.container.innerHTML = '';
+
+    // Current state label
+    const label = document.createElement('div');
+    label.textContent = `State: ${this.stateMachine.getCurrentState().display}`;
+    this.container.appendChild(label);
+
+    // Transition select dropdown
+    const select = document.createElement('select');
+    select.innerHTML = `<option value="" disabled selected>${this.stateMachine.getCurrentState().display}</option>`;
+    this.stateMachine.getCurrentTransitions().forEach(t => {
+      const option = document.createElement('option');
+      option.value = t.name;
+      option.textContent = t.display;
+      option.disabled = !t.canExecute();
+      select.appendChild(option);
+    });
+    select.addEventListener('change', () => {
+      const transitionName = select.value;
+      const transition = this.stateMachine.getTransitionByName(transitionName);
+      this._handleTransition(transition);
+    });
+    this.container.appendChild(select);
+  }
+
+  /** Internal: handle a transition selection */
+  async _handleTransition(transition) {
+    const prevState = this.stateMachine.getCurrentState();
+    try {
+      // 1) beforeTransition hook
+      const extra = this.hooks.beforeTransition
+        ? await this.hooks.beforeTransition({ transition, fromState: prevState })
+        : {};
+
+      // 2) Execute locally
+      const result = this.stateMachine.executeTransition(transition.name);
+      if (!result.success) throw new Error('Transition not allowed');
+
+      // 3) Optimistic render
+      this.render();
+
+      // 4) POST to API
+      const payload = {
+        model: this.model,
+        entityId: this.entityId,
+        transitionName: transition.name,
+        fromState: prevState.name,
+        toState: result.to.name,
+        extraFields: extra
+      };
+      await new Promise((res, rej) => {
+        this.api.post(
+          `/api/workflow-instances/${this.model}/${this.entityId}/transitions`,
+          payload,
+          () => res(),
+          err => rej(err)
+        );
+      });
+
+      // 5) afterTransition hook
+      this.hooks.onTransition?.({ transition, from: prevState, to: result.to, extra });
+
+    } catch (err) {
+      // Roll back UI & FSM
+      this.stateMachine.refresh();
+      this.render();
+      // Error hook
+      this.hooks.onError?.(err);
+    }
+  }
+}
