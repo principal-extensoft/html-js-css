@@ -1,0 +1,280 @@
+<#
+.SYNOPSIS
+    Retrieves IIS and FTP site information, app pools, connection strings, and endpoints from one or more remote servers.
+.DESCRIPTION
+    This script defines a function `Get-RemoteIISInfo` that connects to a remote computer,
+    loads IIS/FTP modules, gathers site/app-pool details, scans configuration files
+    (appsettings.json, web.config) for connection strings and URLs, and outputs a structured
+    object. The main block collects results for all specified servers and writes JSON to
+    both console and a timestamped file under a `data` folder.
+#>
+
+param(
+    [Parameter(Mandatory = $false, HelpMessage = 'One or more server names (or comma-separated list).')]
+    [string[]] $ServerNames = $env:COMPUTERNAME
+)
+
+# If user passed a single comma-delimited string, split into array
+if ($ServerNames.Count -eq 1 -and $ServerNames[0] -match ',') {
+    $ServerNames = $ServerNames[0] -split '\s*,\s*'
+}
+
+function Get-RemoteIISInfo {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, HelpMessage = 'Target computer name')]
+        [string] $ComputerName
+    )
+
+    # Define the scriptblock to execute on the remote machine
+    $scriptBlock = {
+        <#
+        .SYNOPSIS
+            Gathers IIS/FTP, app pool, connection string, and endpoint info locally.
+        #>
+        Import-Module WebAdministration -ErrorAction SilentlyContinue
+
+        # Initialize server info object
+        $serverInfo = [ordered]@{
+            ServerName = $env:COMPUTERNAME
+            IPs        = @()
+            AppPools   = @()
+            Sites      = @()
+        }
+
+        # Helper: scan a physical path for JSON or XML configs, extract connection strings and URLs
+        function Get-Config {
+            [CmdletBinding()]
+            param(
+                [Parameter(Mandatory)][string] $PhysicalPath,
+                [string[]] $Exclusions = @()
+            )
+            # Initialize return values
+            $connStrings = @()
+            $endpoints   = @()
+            $settings    = $null
+
+            # Attempt JSON-based config
+            $jsonFile = Get-ChildItem -Path $PhysicalPath -Filter 'appsettings.json' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($jsonFile) {
+                $settings = $jsonFile.Name
+                try {
+                    $cfg = Get-Content $jsonFile.FullName -Raw | ConvertFrom-Json
+                    # ConnectionStrings section
+                    if ($cfg.ConnectionStrings) {
+                        foreach ($prop in $cfg.ConnectionStrings.PSObject.Properties) {
+                            if ($Exclusions -notcontains $prop.Name) {
+                                $connStrings += [PSCustomObject]@{
+                                    Name       = $prop.Name
+                                    Connection = $prop.Value
+                                }
+                            }
+                        }
+                    }
+                    # Recursive URL finder
+                    function Find-Urls {
+                        param(
+                            [PSCustomObject] $Obj,
+                            [ref] $Results
+                        )
+                        foreach ($p in $Obj.PSObject.Properties) {
+                            if ($p.Value -is [string] -and $p.Value -match 'https?://[^\s"\\]+') {
+                                $Results.Value += [PSCustomObject]@{ Key = $p.Name; Value = $p.Value }
+                            }
+                            elseif ($p.Value -is [PSCustomObject]) {
+                                Find-Urls -Obj $p.Value -Results $Results
+                            }
+                        }
+                    }
+                    Find-Urls -Obj $cfg -Results ([ref]$endpoints)
+                } catch {
+                    # JSON parse failed; proceed to XML
+                }
+            }
+            # If no JSON or parsing failed, try web.config
+            if (-not $settings) {
+                $xmlFile = Get-ChildItem -Path $PhysicalPath -Filter 'web.config' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($xmlFile) {
+                    $settings = $xmlFile.Name
+                    try {
+                        [xml]$xml = Get-Content $xmlFile.FullName
+                        # ConnectionStrings
+                        foreach ($add in $xml.configuration.connectionStrings.add) {
+                            if ($Exclusions -notcontains $add.name) {
+                                $connStrings += [PSCustomObject]@{
+                                    Name       = $add.name
+                                    Provider   = $add.providerName
+                                    Connection = $add.connectionString
+                                }
+                            }
+                        }
+                        # URL endpoints in appSettings
+                        foreach ($add in $xml.configuration.appSettings.add) {
+                            if ($add.value -match 'https?://[^\s"\\]+') {
+                                $endpoints += [PSCustomObject]@{
+                                    Key   = $add.key
+                                    Value = $add.value
+                                }
+                            }
+                        }
+                    } catch {
+                        # XML parse failed
+                    }
+                }
+            }
+
+            return [PSCustomObject]@{
+                Settings          = $settings
+                ConnectionStrings = $connStrings
+                Endpoints         = $endpoints
+            }
+        }
+
+        # --- Collect local IPs ---
+        try {
+            $addresses = [Net.Dns]::GetHostEntry($env:COMPUTERNAME).AddressList |
+                         Where-Object { $_.AddressFamily -eq 'InterNetwork' }
+            for ($i = 0; $i -lt $addresses.Count; $i++) {
+                $serverInfo.IPs += [PSCustomObject]@{
+                    IP        = $addresses[$i].ToString()
+                    IsPrimary = ($i -eq 0)
+                }
+            }
+        } catch {
+            $serverInfo.IPs += [PSCustomObject]@{ IP = 'Unable to resolve IP'; IsPrimary = $true }
+        }
+
+        # --- App Pools ---
+        $serverInfo.AppPools = Get-ChildItem IIS:\AppPools | ForEach-Object {
+            [PSCustomObject]@{
+                Name        = $_.Name
+                Identity    = $_.processModel.userName
+                CLRVersion  = $_.managedRuntimeVersion
+                Enable32Bit = $_.enable32BitAppOnWin64
+                State       = $_.state
+            }
+        }
+
+        # --- IIS Websites ---
+        $websites = Get-Website | ForEach-Object {
+            $siteName = $_.Name
+            # Bindings & certificates
+            $bindings = @()
+            foreach ($b in $_.Bindings.Collection) {
+                $certInfo = $null
+                if ($b.protocol -eq 'https') {
+                    # Build thumbprint
+                    if ($b.CertificateHash -is [byte[]]) {
+                        $thumb = ($b.CertificateHash | ForEach-Object { '{0:x2}' -f $_ }) -join ''
+                    } else { $thumb = $b.CertificateHash }
+                    # Look up cert in LocalMachine\My
+                    $cert = Get-ChildItem Cert:\LocalMachine\My -ErrorAction SilentlyContinue |
+                            Where-Object Thumbprint -eq $thumb
+                    if ($cert) {
+                        $san = $cert.Extensions | Where-Object { $_.Oid.Value -eq '2.5.29.17' } |
+                               ForEach-Object { $_.Format($true) }
+                        $certInfo = [PSCustomObject]@{
+                            Subject      = $cert.Subject
+                            Issuer       = $cert.Issuer
+                            NotBefore    = $cert.NotBefore.ToString('yyyy-MM-dd')
+                            NotAfter     = $cert.NotAfter.ToString('yyyy-MM-dd')
+                            Thumbprint   = $cert.Thumbprint
+                            FriendlyName = $cert.FriendlyName
+                            SerialNumber = $cert.SerialNumber
+                            SAN          = $san
+                        }
+                    }
+                }
+                $bindings += [PSCustomObject]@{
+                    Protocol           = $b.protocol
+                    BindingInformation = $b.bindingInformation
+                    CertificateInfo    = $certInfo
+                }
+            }
+            # Site-level authentication
+            $auth = [PSCustomObject]@{
+                Anonymous = (Get-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' \
+                              -filter "system.webServer/security/authentication/anonymousAuthentication" \
+                              -name enabled -location $siteName).Value
+                Windows   = (Get-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' \
+                              -filter "system.webServer/security/authentication/windowsAuthentication" \
+                              -name enabled -location $siteName).Value
+            }
+            # Root app and physical path
+            $root = Get-WebApplication -Site $siteName -Name '/' -ErrorAction SilentlyContinue
+            if ($root) {
+                $physPath = $root.physicalPath
+                $appPool  = $root.applicationPool
+            } else {
+                $physPath = $_.PhysicalPath
+                $appPool  = 'N/A'
+            }
+            $cfg = Get-Config -PhysicalPath $physPath -Exclusions @('DefaultConnection','connectionStrings')
+            # Build site object
+            [PSCustomObject]@{
+                Name           = $siteName
+                ID             = $_.ID
+                State          = $_.State
+                PhysicalPath   = $physPath
+                AppPool        = $appPool
+                Bindings       = $bindings
+                Authentication = $auth
+                Settings       = $cfg.Settings
+                Connections    = $cfg.ConnectionStrings
+                Endpoints      = $cfg.Endpoints
+            }
+        }
+
+        # --- FTP Sites, if any ---
+        $ftpSites = @()
+        try {
+            $ftpSites = Get-WebFtpSite -ErrorAction Stop | ForEach-Object {
+                $fb = @()
+                foreach ($b in $_.Bindings.Collection) {
+                    $fb += [PSCustomObject]@{
+                        Protocol           = $b.protocol
+                        BindingInformation = $b.bindingInformation
+                    }
+                }
+                [PSCustomObject]@{
+                    Name         = $_.Name
+                    State        = $_.State
+                    PhysicalPath = $_.PhysicalPath
+                    Bindings     = $fb
+                    Type         = 'FTP Site'
+                }
+            }
+        } catch {
+            # No FTP or module missing
+        }
+
+        # Combine sites and return
+        $serverInfo.Sites = $websites + $ftpSites
+        return [PSCustomObject]$serverInfo
+    }
+
+    try {
+        Invoke-Command -ComputerName $ComputerName -ScriptBlock $scriptBlock -ErrorAction Stop
+    } catch {
+        Write-Error "Failed to get IIS info from $ComputerName: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+<# Main execution: collect from each server #>
+$allInfo = foreach ($srv in $ServerNames) {
+    Get-RemoteIISInfo -ComputerName $srv
+}
+
+# Convert to JSON and output
+$jsonOutput = $allInfo | ConvertTo-Json -Depth 10
+Write-Output $jsonOutput
+
+# Write to timestamped file under ./data
+$dataFolder = Join-Path -Path $PSScriptRoot -ChildPath 'data'
+if (-not (Test-Path $dataFolder)) { New-Item -Path $dataFolder -ItemType Directory | Out-Null }
+$timestamp  = Get-Date -Format 'yyyy-MM-dd.HH-mm'
+$scriptName = [IO.Path]::GetFileNameWithoutExtension($MyInvocation.MyCommand.Name)
+$outputFile = Join-Path $dataFolder "$timestamp.$scriptName.json"
+$jsonOutput | Out-File -FilePath $outputFile -Encoding UTF8
+Write-Host "JSON output written to file: $outputFile"
