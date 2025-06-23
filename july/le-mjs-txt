@@ -1,0 +1,994 @@
+import ApiService from './api-service.mjs';
+import Common from './common.mjs';
+import * as DomUtil from './dom-utils.mjs';
+import * as SuperGrid from './super-grid.mjs';
+import * as Dates from './dates.mjs';
+
+const LogExplorer = {
+    settings: {
+        models: ['api-request', 'exception', 'message'],
+        model: 'api-request',
+        elementIds: {
+            start: 'start-date',
+            end: 'end-date',
+            container: 'log-explorer-container',
+            facetsContainer: 'facets-container',
+            facetsCommand: 'facets-command',
+            grid: 'grid-container',
+            modelButtons: {
+                apiRequest: 'api-request',
+                exceptionEvent: 'exception-event',
+                message: 'message'
+            },
+            stageSelector: 'stage-selector',
+            logicalOperator: 'logical-operator-btn',
+            timespanSelector: 'start-end',
+            datesContainer: 'dates-container'
+        },
+        elements: {
+            start: null,
+            end: null,
+            container: null,
+            facetsContainer: null,
+            facetsCommand: null,
+            grid: null,
+            modelButtons: {
+                apiRequest: null,
+                exceptionEvent: null,
+                message: null
+            },
+            stageSelector: null,
+            logicalOperator: null,
+            timespanSelector: null,
+            datesContainer: null
+        },
+        endpoints: {
+            facetsUrl: '/api/log-explorer/{model}/facets',
+            searchUrl: '/api/log-explorer/{model}/search'
+        },
+        grid: {
+            apiRequest: {
+                pageIndex: 0,
+                pageSize: 25,
+                facetFields: [
+                    {
+                        field: 'identifier',
+                        header: 'Identifier',
+                        isSortable: false,
+                        isProfile: false,
+                        isShow: false,
+                        isIn: true
+                    },
+                    {
+                        field: 'correleationId',
+                        header: 'CorreleationId',
+                        isSortable: false,
+                        isProfile: false,
+                        isShow: false,
+                        isIn: true
+                    },
+                    {
+                        field: 'sessionId',
+                        header: 'SessionId',
+                        isSortable: false,
+                        isProfile: false,
+                        isShow: false,
+                        isIn: true
+                    },
+                    {
+                        field: 'machine',
+                        header: 'Machine',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'stage',
+                        header: 'Stage',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'application',
+                        header: 'Application',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'startAt',
+                        header: 'StartAt',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'stopAt',
+                        header: 'StopAt',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'elapsed',
+                        header: 'Elapsed',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'host',
+                        header: 'Host',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'scheme',
+                        header: 'Scheme',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'path',
+                        header: 'Path',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'queryString',
+                        header: 'QueryString',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'httpMethod',
+                        header: 'HttpMethod',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'httpStatus',
+                        header: 'httpStatus',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'controllerName',
+                        header: 'ControllerName',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'controllerMethod',
+                        header: 'ControllerMethod',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'hasError',
+                        header: 'HasError',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'isPassThrough',
+                        header: 'IsPassThrough',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'data',
+                        header: 'Data',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    }
+                ]
+            },
+            exceptionEvent: {
+                pageIndex: 0,
+                pageSize: 25,
+                facetFields: [
+                    {
+                        field: 'machine',
+                        header: 'Machine',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'stage',
+                        header: 'Stage',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'application',
+                        header: 'Application',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'startAt',
+                        header: 'StartAt',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'tags',
+                        header: 'Tags',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'path',
+                        header: 'Path',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'actionName',
+                        header: 'ActionName',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'sourceContext',
+                        header: 'SourceContext',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'message',
+                        header: 'Message',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    }
+                ]
+            },
+            message: {
+                pageIndex: 0,
+                pageSize: 25,
+                facetFields: [
+                    {
+                        field: 'correleationId',
+                        header: 'CorreleationId',
+                        isSortable: false,
+                        isProfile: false,
+                        isShow: false,
+                        isIn: true
+                    },
+                    {
+                        field: 'machine',
+                        header: 'Machine',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'stage',
+                        header: 'Stage',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'application',
+                        header: 'Application',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'startAt',
+                        header: 'StartAt',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'tags',
+                        header: 'Tags',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'level',
+                        header: 'Level',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                    {
+                        field: 'message',
+                        header: 'Message',
+                        isSortable: true,
+                        isProfile: true,
+                        isShow: true,
+                        isIn: true
+                    },
+                ]
+            }
+        }
+    },
+    state: {
+        page: [],
+        pageIndex: -1,
+        today: null,
+        start: null,
+        end: null,
+        facets: [],
+        selectedModel: 'api-request',
+        isProd: false,
+        selectedStage: '',
+        selectedTab: 'facets',
+        logicalOperator: 'and'
+    },
+
+    init(opts = {}) {
+        Common.merge(this.settings, opts);
+        this.settings.elements.facetsContainer = document.getElementById(this.settings.elementIds.facetsContainer);
+        this.settings.elements.facetsCommand = document.getElementById(this.settings.elementIds.facetsCommand);
+        this.settings.elements.start = document.getElementById(this.settings.elementIds.start);
+        this.settings.elements.end = document.getElementById(this.settings.elementIds.end);
+        this.settings.elements.modelButtons.apiRequest = document.getElementById(this.settings.elementIds.modelButtons.apiRequest);
+        this.settings.elements.modelButtons.exceptionEvent = document.getElementById(this.settings.elementIds.modelButtons.exceptionEvent);
+        this.settings.elements.modelButtons.message = document.getElementById(this.settings.elementIds.modelButtons.message);
+        this.settings.elements.stageSelector = document.getElementById(this.settings.elementIds.stageSelector);
+        this.settings.elements.logicalOperator = document.getElementById(this.settings.elementIds.logicalOperator);
+        this.settings.elements.timespanSelector = document.getElementById(this.settings.elementIds.timespanSelector);
+        this.settings.elements.datesContainer = document.getElementById(this.settings.elementIds.datesContainer);
+
+        this.state.today = new Date();
+        this.state.end = new Date(this.state.today);
+        this.state.start = new Date(this.state.today);
+        this.state.start.setMonth(this.state.start.getMonth() - 3);
+
+        this.settings.elements.timespanSelector.addEventListener('click', () => {
+            let display = 'Stage & Dates';
+            this.settings.elements.datesContainer.classList.toggle('collapsed');
+            if (this.settings.elements.datesContainer.classList.contains('collapsed')) {
+                const stage = this.state.stage === 'PROD' ? 'PROD' : 'DEV';
+                display = `${stage} ${Dates.format(this.state.start, 'MM/dd')} - ${Dates.format(this.state.end, 'MM/dd')}`;
+            }
+            this.settings.elements.timespanSelector.innerText = display;
+        });
+
+        document.getElementById("detailsModalClose").onclick = function (e) {
+            document.getElementById("detailsModal").style.display = 'none';
+        }
+
+        document.getElementById('previous-btn').onclick = () => { this.navigateNext(); }
+        document.getElementById('next-btn').onclick = () => { this.navigatePrevious(); }
+
+        document.querySelector('#facet-field-container .btn-group').addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') {
+                this.selectModel(event.target.id);
+            }
+        });
+
+        document.querySelectorAll('#facet-field-container .nav-link').forEach(tab => {
+            tab.addEventListener('click', (event) => {
+                this.selectTab(event.target.id.split('-')[0]);
+            });
+        });
+
+        document.getElementById('summary').addEventListener('click', () => {
+            document.getElementById('summary-container').classList.toggle('expanded');
+        })
+
+        this.settings.elements.logicalOperator.addEventListener('click', (event) => {
+            if (event.target.classList.contains('logical-and')) {
+                event.target.classList.remove('logical-and');
+                event.target.classList.add('logical-or');
+                event.target.textContent = 'OR';
+                this.state.logicalOperator = 'or'
+            } else {
+                event.target.classList.remove('logical-or');
+                event.target.classList.add('logical-and');
+                event.target.textContent = 'AND';
+                this.state.logicalOperator = 'and'
+            }
+            this.displaySummary();
+        });
+
+        this.settings.elements.stageSelector.addEventListener('click', () => {
+            this.state.isProd = !this.state.isProd;
+            this.settings.elements.stageSelector.textContent = this.state.isProd ? "PROD" : "DEV";
+            this.settings.elements.stageSelector.classList.toggle('active', this.state.isProd);
+            this.loadFacets()
+            this.displaySummary();
+        });
+
+        document.getElementById('profile-toggle').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.profile-checkbox');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => { checkbox.checked = !allChecked; });
+            this.toggleFacetFields(true, !allChecked);
+        });
+
+        document.getElementById('show-toggle').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.show-checkbox');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => { checkbox.checked = !allChecked; });
+            this.toggleFacetFields(false, !allChecked);
+        });
+            
+        this.settings.elements.start.value = this.formatDate(this.state.start);
+        this.settings.elements.end.value = this.formatDate(this.state.end);
+        this.settings.elements.start.addEventListener('change', (event) => {
+            this.state.start = new Date(event.target.value);
+            this.loadFacets();
+            this.displaySummary();
+        });
+        this.settings.elements.end.addEventListener('change', (event) => {
+            this.state.end = new Date(event.target.value);
+            this.loadFacets();
+            this.displaySummary();
+        });
+        this.loadFacetFields();
+        this.loadFacets();
+        this.renderFacetContainer();
+    },
+
+    selectModel(modelId) {
+        this.clearAll();
+        this.state.selectedModel = modelId;
+        this.settings.model = modelId;
+        this.settings.elements.modelButtons.apiRequest.classList.remove('active');
+        this.settings.elements.modelButtons.exceptionEvent.classList.remove('active');
+        this.settings.elements.modelButtons.message.classList.remove('active');
+        document.getElementById(this.state.selectedModel).classList.remove('active');
+        this.loadFacetFields();
+        this.loadFacets();
+    },
+
+    selectTab(tab) {
+        this.state.selectedTab = tab;
+    },
+
+    formatDate(date) {
+        return date.toISOString().split('T')[0];
+    },
+
+    clearAll() {
+        const supergrid = document.getElementById('super-grid-container');
+        supergrid.innerHTML = '';
+        document.getElementById('output-details-container').innerHTML = '';
+        document.getElementById('summary-container').classList.remove('expanded');
+        this.setActiveTab('facets-tb', 'fields-tab');
+    },
+
+    setActiveTab(activeTabId, inactiveTabId) {
+        const inactiveTab = document.getElementById(inactiveTabId);
+        const inactiveTabPane = document.getElementById(inactiveTabId.replace('tab', ''));
+        if (inactiveTab) {
+            inactiveTab.classList.remove('active');
+            inactiveTab.classList.remove('show');
+            inactiveTab.setAttribute('aria-selected', 'false');
+        }
+
+        const activeTab = document.getElementById(activeTabId);
+        const activeTabPane = document.getElementById(activeTabId.replace('tab', ''));
+        if (activeTab) {
+            activeTab.classList.add('active');
+            activeTab.classList.add('show');
+            activeTab.setAttribute('aria-selected', 'true');
+        }
+    },
+
+    loadFacetFields() {
+        const tbody = document.querySelector('#facet-fields tbody');
+        tbody.innerHTML = '';
+        let fields = [];
+        switch (this.state.selectedModel) {
+            case "api-request":
+                fields = this.settings.grid.apiRequest.facetFields;
+                break;
+            case "exception-event":
+                fields = this.settings.grid.exceptionEvent.facetFields;
+                break;
+            case "mesasge":
+                fields = this.settings.grid.message.facetFields;
+                break;
+        }
+        fields.forEach((field, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td><intput type="checkbox" class="profile-checkbox" data-type="isProfile" data-index="${index}" ${field.isProfile ? 'checked' : ''} /></td>
+            <td>${field.header}</dt>
+            <td><intput type="checkbox" class="profile-checkbox" data-type="isShow" data-index="${index}" ${field.isShow ? 'checked' : ''} /></td>
+            `;
+            tbody.appendChild(row);
+        });
+        tbody.addEventListener('change', (event) => {
+            if (event.target.matches('input[type="checkbox"]')) {
+                const index = event.target.getAttribute('data-index');
+                const type = event.target.getAttribute('data-type');
+                let fields = [];
+                switch (this.state.selectedModel) {
+                    case "api-request":
+                        fields = this.settings.grid.apiRequest.facetFields;
+                        break;
+                    case "exception-event":
+                        fields = this.settings.grid.exceptionEvent.facetFields;
+                        break;
+                    case "mesasge":
+                        fields = this.settings.grid.message.facetFields;
+                        break;
+                }
+                if (type === 'isProfile') {
+                    fields[index].isProfile = event.target.checked;
+                } else if (type === 'isShow') {
+                    fields[index].isShow = event.target.checked;
+                }
+            }
+        });
+    },
+
+    toggleFacetFields(isProfile, isChecked) {
+        let fields = [];
+        switch (this.state.selectedModel) {
+            case "api-request":
+                fields = this.settings.grid.apiRequest.facetFields;
+                break;
+            case "exception-event":
+                fields = this.settings.grid.exceptionEvent.facetFields;
+                break;
+            case "mesasge":
+                fields = this.settings.grid.message.facetFields;
+                break;
+        }
+        fields.forEach(f => {
+            if (isProfile) {
+                f.isProfile = isChecked;
+            } else {
+                f.isShow = isChecked;
+            }
+        })
+    },
+
+    async loadFacets() {
+        const url = this.assembleUrl();
+        this.settings.elements.facetsContainer.innerHTML = '<em>Loading facets...</em>';
+        ApiService.get(
+            url,
+            data => {
+                this.state.facets = data.items || [];
+                if (this.state.facets.length > 0) {
+                    this.renderFacets();
+                } else {
+                    this.settings.elements.facetsContainer.innerHTML = '<em>No facets found...</em>';
+                }
+            },
+            err => {
+                this.settings.elements.facetsContainer.innerHTML = 'span class="text-danger">Failed to load facets</span>';
+            }
+        )
+    },
+
+    assembleUrl() {
+        const rooturl = this.settings.endpoints.facetsUrl.replace('{model}', this.settings.model);
+        const stage = this.state.isProd ? 'prod' : 'dev';
+        const profilefields = this.assembleProfileFields();
+        let url = `${rooturl}?start=${this.formatDate(this.state.start)}&end=${this.formatDate(this.state.end)}&log-stage=${stage}`;
+        if (profilefields) {
+            url += `&profile-fields=${profilefields}`;
+        }
+        return url;
+    },
+
+    assembleProfileFields() {
+        let fields = this.getFacetFields()
+            .filter(f => f.isProfile === true)
+            .map(f => {
+                const capitalizedField = f.field.charAt(0).toUpperCase() + f.field.slice(1);
+                if (f.profilePattern && f.profilePattern.trim() !== '') {
+                    return `${capitalizedField}-${f.profilePattern}`;
+                } else {
+                    return capitalizedField;
+                }
+            })
+        if (fields.length > 0) {
+            return fields.join(',');
+        }
+    },
+
+    getFacetFields() {
+        let fields = [];
+        switch (this.state.selectedModel) {
+            case "api-request":
+                fields = this.settings.grid.apiRequest.facetFields;
+                break;
+            case "exception-event":
+                fields = this.settings.grid.exceptionEvent.facetFields;
+                break;
+            case "mesasge":
+                fields = this.settings.grid.message.facetFields;
+                break;
+        }
+        return fields;
+    },
+
+    resolveGridSettings() {
+        let grid = {
+            pageIndex: 0,
+            pageSize: 25,
+            settings: {
+                hasEdit: false,
+                hasDelete: false
+            },
+            fields: this.getFacetFields()
+                .filter(f => f.isShow === true)
+                .map(f => f)
+        };
+        return grid;
+    },
+
+    renderFacetContainer() {
+        this.settings.elements.facetsCommand.style.display = 'flex';
+        this.settings.elements.facetsCommand.style.justifyContent = 'space-between';
+        this.settings.elements.facetsCommand.style.alignItems = 'center';
+        this.settings.elements.facetsCommand.style.width = '15rem';
+        const clearbutton = document.createElement('button');
+        clearbutton.textContent = 'Clear';
+        clearbutton.id = 'clear-command';
+        clearbutton.type = 'button';
+        clearbutton.classList.add('btn', 'btn-primary', 'clear-filter', 'command');
+        clearbutton.addEventListener('click', () => {
+            this.state.facts.forEach(f => {
+                f.items.forEach(opt => {
+                    opt.isSelected = false;
+                });
+            });
+            const selectElements = document.querySelectorAll('select.multiselect-listbox');
+            selectElement.forEach(select => {
+                select.selectedIndex = 0;
+                select.classList.remove('has-selections');
+            });
+        });
+        const searchbutton = document.createElement('button');
+        searchbutton.textContent = 'Search';
+        searchbutton.id = 'search-command';
+        searchbutton.type = 'button';
+        searchbutton.classList.add('btn', 'btn-primary', 'execute-filter', 'command');
+        searchbutton.addEventListener('click', () => {
+            this.fetchAndRender();
+        });
+        this.settings.elements.facetsCommand.appendChild(clearbutton);
+        this.settings.elements.facetsCommand.appendChild(searchbutton);
+    },
+
+    renderFacets() {
+        const fields = this.getFacetFields();
+        const container = this.settings.elements.facetsContainer;
+        container.innerHTML = '';
+        this.state.facets.forEach(f => {
+            const found = fields.find(ff => ff.field === f.name);
+            if (found) {
+                f.isIn = found.isIn;
+            } else {
+                f.isIn = true;
+            }
+            const el = this.buildFacet(f);
+            container.appendChild(el);
+        });
+    },
+
+    buildFacet(f) {
+        const fieldset = document.createElement('fieldset');
+        fieldset.style.width = '15rem';
+        fieldset.className = 'facet-card';
+        const legend = document.createElement('legend');
+        const div = document.createElement('div');
+        div.className = 'card-content';
+        legend.style.display = 'flex';
+        legend.style.justifyContent = 'space-between';
+        legend.style.alignItems = 'center';
+        legend.style.cursor = 'pointer';
+
+        const leftspan = document.createElement('span');
+        leftspan.className = 'pl2';
+        leftspan.textContent = f.display;
+        leftspan.style.cursor = 'pointer';
+        leftspan.addEventListener('click', () => {
+            if (div.classList.contains('expanded')) {
+                div.classList.remove('expanded');
+            } else {
+                const selectElements = document.querySelectorAll('.card-content.expanded');
+                selectElements.forEach(select => {
+                    select.classList.remove('expanded');
+                });
+                div.classList.add('expanded');
+            }
+        });
+
+        const rightspan = document.createElement('span');
+        rightspan.className = 'pl2';
+        rightspan.textContent = f.count;
+
+        const isInToggle = document.createElement('button');
+        if (f.isIn) {
+            isInToggle.innerText = "IN";
+            isInToggle.classList.add('toggle-in');
+        } else {
+            isInToggle.innerText = "NIN";
+            isInToggle.classList.add('toggle-nin');
+        }
+        isInToggle.innerText = f.isIn ? 'IN' : 'NIN';
+        isInToggle.classList.add('nin-in-btn');
+        isInToggle.addEventListener('click', (event) => {
+            if (event.target.classList.container('toggle-in')) {
+                event.target.classList.remove('toggle-in');
+                event.target.classList.add('toggle-nin');
+                event.target.textContent = 'NIN';
+                f.isIn = false;
+            } else {
+                event.target.classList.remove('toggle-nin');
+                event.target.classList.add('toggle-in');
+                event.target.textContent = 'IN';
+                f.isIn = true;
+            }
+            this.displaySummary();
+        });
+
+        legend.appendChild(isInToggle);
+        legend.appendChild(leftspan);
+        legend.appendChild(rightspan);
+        fieldset.appendChild(legend);
+
+        const select = document.createElement('select');
+        select.multiple = f.isMultiSelect;
+        if (f.isMultiSelect) {
+            select.className = 'multiselect-listbox';
+        }
+        select.id = f.id;
+        select.disabled = !f.isEnabled;
+
+        if (f.items.length > 10) {
+            select.style.height = '15rem';
+        } else if (f.items.length > 3) {
+            select.style.height = '9rem';
+        }
+        select.style.width = '14rem';
+        const opt = document.createElement('option');
+        opt.value = '-';
+        opt.textContent = '---';
+        select.appendChild(opt);
+
+        f.items.forEach(item => {
+            if (item.display && item.display.length > 0) {
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.text = `${item.display} - ${item.count}`;
+                option.disabled = !item.isEnabled;
+                option.title = item.display;
+                select.appendChild(option);
+            }
+        });
+
+        select.addEventListener('change', (event) => { this.handleSelectFacetEvent(event, select); });
+
+        div.appendChild(select);
+        fieldset.appendChild(div);
+        return fieldset;
+    },
+
+
+    handleSelectFacetEvent(event, selectElement) {
+        const id = selectElement.id;
+        var selections = DomUtil.getSelectedValues(selectElement);
+        const facet = this.state.facets.find((f) => f.id === selectElement.id);
+        if (facet) {
+            let count = 0;
+            facet.items.forEach((item) => {
+                item.isSelected = selections.includes(item.value);
+                if (item.isSelected) { count++; }
+            });
+            if (count == 0) {
+                selectElement.classList.remove('has-selections')
+            } else {
+                selectElement.classList.activeTab('has-selections');
+            }
+            this.displaySummary();
+        }
+    },
+
+    assembleQueryString() {
+        const qs = this.assembleSelections();
+        return qs.join('&');
+    },
+
+    displaySummary() {
+        const qs = this.assembleSelections();
+        this.displayKeyValuePairs(qs);
+    },
+
+    assembleSelections() {
+        let kvps = [];
+        const stage = this.state.isProd ? 'prod' : 'dev';
+        kvps.push(`log-start=${this.formatDate(this.state.start)}`);
+        kvps.push(`log-end=${this.formatDate(this.state.end)}`);
+        kvps.push(`log-stage=${stage}`);
+        kvps.push(`logical-operator=${this.state.logicalOperator}`);
+
+        this.state.facets.forEach(f => {
+            var selected = f.items.filter((item) => item.isSelected);
+            if (selected.length > 0) {
+                let selectedValues = selected.map((item) => item.value);
+                const parts = f.id.split('.');
+                const ninin = f.isIn ? 'in' : 'nin';
+                kvps.push(`${parts[2]}-${nin}=${selectedValues.join(',')}`);
+            }
+        });
+        var sortpage = SuperGrid.assembleSortingPaging();
+        return sortpage.concat(kvps);
+    },
+
+    displayKeyValuePairs(kvps) {
+        let ulContent = '<ul>';
+        kvps.forEach(kvp => {
+            const [key, value] = kvp.split('=');
+            const values = value.split(',');
+            if (values.length > 1) {
+                ulContent += `
+                <li>
+                    ${key}: <ul>
+                        ${values.map(v => `<li><strong>${v.trim()}</strong></li>`).join('')}
+                        </ul>
+                </li>`;
+            } else {
+                ulContent += `
+                <li>
+                    ${key}: <strong>${values.join(', ')}</strong>
+                </li>`;
+            }
+        });
+        ulContent += '</ul>';
+        document.getElementById('output-details-container').innerHTML = ulContent;
+    },
+
+    fetchAndRender() {
+        const gridsettings = this.resolveGridSettings();
+        var qs = this.assembleQueryString();
+        var url = `${this.settings.endpoints.searchUrl.replace('{model}', this.settings.model)}?${qs}`;
+
+        ApiService.get(url,
+            data => {
+                this.state.page = data.items;
+                SuperGrid.refresh();
+                SuperGrid.init(
+                    {
+                        grid: gridsettings,
+                        elementIds: this.settings.elementIds,
+                        handlers: {
+                            executeIndex: () => { this.fetchAndRender(); },
+                            executeGet: (event, key) => {
+                                event.preventDefault();
+                                this.handleDetails(key);
+                            }
+                        }
+                    }
+                );
+                SuperGrid.renderGrid(data);
+            },
+            err => {
+                console.error(`error: ${err}`);
+            });
+    },
+
+    handleDetails(key) {
+        const record = this.state.page.find(x => x.id === key);
+        this.state.pageIndex = this.state.page.findIndex(x => x.id === key);
+        if (record) {
+            this.handleDetailsRecord(record);
+        }
+    },
+
+    handleDetailsRecord(record) {
+        let html = this.buildGenericDisplay(record);
+        document.getElementById('details-container').innerHTML = html;
+        document.getElementById('details-title').innerText = record.id;
+        document.getElementById('detailsModal').style.display = 'flex';
+    },
+
+    navigatePrevious() {
+        const record = this.state.pageIndex > 0 ? this.state.page[this.state.pageIndex - 1] : null;
+        if (record) {
+            this.state.pageIndex--;
+            this.handleDetailsRecord(record);
+        }
+    },
+
+    navigateNext() {
+        const record = this.state.pageIndex < this.state.page.length - 1 ? this.state.page[this.state.pageIndex + 1] : null;
+        if (record) {
+            this.state.pageIndex++;
+            this.handleDetailsRecord(record);
+        }
+    },
+
+    buildGenericDisplay(model) {
+        let html = '<dl class="row">';
+        for (const key in model) {
+            if (model.hasOwnProperty(key)) {
+                const value = model[key];
+                html += `<dt class="col-sm-2">${key.charAt(0).toUpperCase() + key.slice(1)}</dt>`;
+                if (Array.isArray(value)) {
+                    html += '<dd class="col-sm-10"><ul>';
+                    value.forEach(item => {
+                        if (typeof item === 'object' && item !== null) {
+                            html += '<li><hr/><ul>';
+                            for (const [key, val] of Object.entries(item)) {
+                                html += `<li>${key}: <strong>${val}</strong></li>`;
+                            }
+                        } else {
+                            html += `<li>${item}</li>`;
+                        }
+                    })
+                } else if (typeof value === 'object' && value !== null) {
+                    html += `<dd class="col-sm-10">Object value</dd>`;
+                } else {
+                    html += `<dd class="col-sm-10">${value}</dd>`;
+                }
+            }
+        }
+        html += '</dl>';
+        return html;
+    }
+
+}
+
+export default LogExplorer;
