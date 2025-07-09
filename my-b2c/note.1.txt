@@ -1,0 +1,13 @@
+Here’s what I’ve got saved as your preferences:
+
+Use ASP .NET .cshtml pages with output caching for all SEO‐critical landing and product pages.
+
+Implement the cart as a Vue 3 widget via the CDN (no build step).
+
+Persist carts server-side, keyed by a small Cart ID cookie (HttpOnly; Secure; SameSite=Lax).
+
+Support multiple named carts per Member (e.g. “Christmas,” “Birthdays,” etc.).
+
+Manage releases with Microsoft.FeatureManagement feature flags stored in your database, plus an admin UI for flipping bits.
+
+Roll out features canary-style by percentage (using the built-in percentage filter) without requiring a hardware load-balancer.
