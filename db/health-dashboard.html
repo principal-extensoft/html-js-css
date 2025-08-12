@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard</title>
+    <!-- Chart.js CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Base styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <!-- Theme styles - Change the theme by swapping the CSS file -->
+    <!-- <link rel="stylesheet" href="styles/theme-wallstreet.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-federal.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-elegance.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-glassy.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-mainframe.css">--> 
+    <!-- <link rel="stylesheet" href="styles/theme-raiders.css"> -->
+    <link rel="stylesheet" href="styles/theme-patriotic.css"> 
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">System Health Dashboard</h1>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="subscriber-select">Subscriber:</label>
+                    <select id="subscriber-select">
+                        <option>Application A</option>
+                        <option>Application B</option>
+                        <option>Payment Service</option>
+                        <option>User Service</option>
+                        <option>Database Cluster</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <button id="prev-date" class="nav-btn">‹</button>
+                    <span id="date-label" class="date-label"></span>
+                    <button id="next-date" class="nav-btn">›</button>
+                    <button id="today-btn">Today</button>
+                </div>
+            </div>
+            
+            <div class="view-tabs">
+                <button class="tab" data-target="day-view">Daily</button>
+                <button class="tab" data-target="week-view">Weekly</button>
+                <button class="tab" data-target="month-view">Monthly</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <!-- Daily View -->
+        <div id="day-view" class="view">
+            <div class="dashboard-grid">
+                <!-- Overall Health Status -->
+                <div class="card">
+                    <h3>Overall Health Status</h3>
+                    <div class="status-grid">
+                        <div class="status-item status-healthy" data-tooltip="8 applications running optimally&#10;All systems operational&#10;Average uptime: 99.8%">
+                            <span class="status-count">8</span>
+                            <span class="status-label">Healthy</span>
+                        </div>
+                        <div class="status-item status-degraded" data-tooltip="2 applications with performance issues&#10;Response times elevated&#10;Memory usage above 80%">
+                            <span class="status-count">2</span>
+                            <span class="status-label">Degraded</span>
+                        </div>
+                        <div class="status-item status-unhealthy" data-tooltip="1 application offline&#10;Database connection failed&#10;Last seen: 14 minutes ago">
+                            <span class="status-count">1</span>
+                            <span class="status-label">Unhealthy</span>
+                        </div>
+                    </div>
+                    <div class="metric-item" data-tooltip="Based on successful health checks vs total checks&#10;Target: 99.5%&#10;Current month: 98.9%">
+                        <span class="metric-label">Overall Uptime</span>
+                        <span class="metric-value">98.7%</span>
+                    </div>
+                </div>
+
+                <!-- Resource Utilization -->
+                <div class="card">
+                    <h3>Resource Utilization</h3>
+                    <div class="progress-item" data-tooltip="CPU: 68% average load&#10;Peak today: 85% at 2:15 PM&#10;Cores: 8 available">
+                        <div class="progress-header">
+                            <span class="progress-label">CPU Usage</span>
+                            <span class="progress-value">68%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-cpu" style="width: 68%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item" data-tooltip="RAM: 5.8GB used of 8GB total&#10;Peak today: 6.2GB at 2:15 PM&#10;Avg last 7 days: 4.1GB">
+                        <div class="progress-header">
+                            <span class="progress-label">RAM Usage</span>
+                            <span class="progress-value">72%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-ram" style="width: 72%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item" data-tooltip="Disk: 450GB used of 1TB total&#10;Growth rate: +12GB/week&#10;Estimated full: 42 days">
+                        <div class="progress-header">
+                            <span class="progress-label">Disk Usage</span>
+                            <span class="progress-value">45%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-disk" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item" data-tooltip="Active connections: 89 of 100 max&#10;Average response time: 12ms&#10;Failed connections: 0 in last hour">
+                        <div class="progress-header">
+                            <span class="progress-label">DB Connections</span>
+                            <span class="progress-value">89%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-db" style="width: 89%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 24-Hour Heatmap -->
+                <div class="card">
+                    <h3>24-Hour Health Heatmap</h3>
+                    <div class="heatmap" id="daily-heatmap">
+                        <!-- Heatmap hours will be generated by JavaScript -->
+                    </div>
+                    <div class="heat-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--success);"></div>
+                            <span>Healthy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--warning);"></div>
+                            <span>Degraded</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--error);"></div>
+                            <span>Unhealthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="card">
+                    <h3>Performance Metrics</h3>
+                    <div class="metric-item" data-tooltip="Current: 247ms&#10;Yesterday: 220ms&#10;7-day avg: 195ms&#10;Target: <200ms">
+                        <span class="metric-label">Avg Response Time</span>
+                        <span class="metric-value">247ms <span class="metric-trend trend-up">↑ 12%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Last 24h: 3 failures&#10;Last week: 5 failures&#10;Most common: timeout (2/3)">
+                        <span class="metric-label">Failed Health Checks</span>
+                        <span class="metric-value">3 <span class="metric-trend trend-down">↓ 40%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Mean Time To Recovery&#10;Target: <5 minutes&#10;Best: 1.2 min&#10;Worst: 8.4 min">
+                        <span class="metric-label">MTTR</span>
+                        <span class="metric-value">4.2 min <span class="metric-trend trend-down">↓ 15%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Today's incidents: 2&#10;This week: 7&#10;Avg resolution: 3.5 min">
+                        <span class="metric-label">Incidents Today</span>
+                        <span class="metric-value">2</span>
+                    </div>
+                </div>
+
+                <!-- Real-time Trend Chart -->
+                <div class="card">
+                    <h3>Real-time System Health</h3>
+                    <div class="chart-container">
+                        <canvas id="trend-line"></canvas>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="card">
+                    <h3>Active Alerts</h3>
+                    <div class="alerts">
+                        <div class="alert-item" data-tooltip="Server: app-server-03&#10;Threshold: 85%&#10;Current: 87%&#10;Duration: 12 minutes">
+                            <div class="alert-icon">!</div>
+                            <div class="alert-content">
+                                <h4>High Memory Usage</h4>
+                                <p>App-Server-03 RAM usage exceeded 85% threshold</p>
+                            </div>
+                        </div>
+                        <div class="alert-item" data-tooltip="Service: payment-service&#10;Connection pool: 89/100&#10;Timeouts: 3 in last 5 min&#10;Status: Investigating">
+                            <div class="alert-icon">!</div>
+                            <div class="alert-content">
+                                <h4>Database Connection Issues</h4>
+                                <p>Payment-Service experiencing intermittent DB timeouts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly View -->
+        <div id="week-view" class="view">
+            <div class="dashboard-grid wide">
+                <div class="card">
+                    <h3>Weekly Health Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="weekly-health"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Weekly Metrics</h3>
+                    <div class="metric-item">
+                        <span class="metric-label">Avg Response Time</span>
+                        <span class="metric-value">215ms</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Downtime</span>
+                        <span class="metric-value">23 min</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Incidents</span>
+                        <span class="metric-value">7</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">SLA Uptime</span>
+                        <span class="metric-value">99.2%</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Peak Usage Patterns</h3>
+                    <div class="chart-container">
+                        <canvas id="peak-usage"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Incident Correlation</h3>
+                    <div class="chart-container">
+                        <canvas id="incident-correlation"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly View -->
+        <div id="month-view" class="view">
+            <div class="dashboard-grid wide">
+                <div class="card">
+                    <h3>Monthly Health Heatmap</h3>
+                    <div class="chart-container">
+                        <canvas id="month-heatmap"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Monthly Summary</h3>
+                    <div class="metric-item">
+                        <span class="metric-label">SLA Uptime</span>
+                        <span class="metric-value">99.1%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Incidents</span>
+                        <span class="metric-value">28</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Avg MTTR</span>
+                        <span class="metric-value">4.8 min</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Capacity Forecast</span>
+                        <span class="metric-value">67% by EOY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tab');
+            const views = document.querySelectorAll('.view');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    views.forEach(v => v.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.target).classList.add('active');
+                });
+            });
+            
+            // Activate default view (daily)
+            document.querySelector('.tab[data-target="day-view"]').click();
+
+            // Date navigation
+            const dateLabel = document.getElementById('date-label');
+            let currentDate = new Date();
+            
+            function updateDateLabel(date) {
+                dateLabel.textContent = date.toDateString();
+            }
+            
+            updateDateLabel(currentDate);
+
+            document.getElementById('today-btn').addEventListener('click', () => {
+                currentDate = new Date();
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('prev-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 1);
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('next-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 1);
+                updateDateLabel(currentDate);
+            });
+
+            // Generate 24-hour heatmap
+            function generateHeatmap() {
+                const heatmapContainer = document.getElementById('daily-heatmap');
+                const healthStates = ['heat-healthy', 'heat-degraded', 'heat-unhealthy'];
+                const weights = [0.7, 0.2, 0.1]; // Probability weights
+                
+                for (let hour = 0; hour < 24; hour++) {
+                    const hourElement = document.createElement('div');
+                    hourElement.className = 'heatmap-hour';
+                    hourElement.textContent = hour.toString().padStart(2, '0');
+                    
+                    // Simulate health state with weighted random
+                    const random = Math.random();
+                    let cumulativeWeight = 0;
+                    let selectedState = healthStates[0];
+                    
+                    for (let i = 0; i < weights.length; i++) {
+                        cumulativeWeight += weights[i];
+                        if (random <= cumulativeWeight) {
+                            selectedState = healthStates[i];
+                            break;
+                        }
+                    }
+                    
+                    hourElement.classList.add(selectedState);
+                    
+                    // Add tooltip data
+                    const responseTime = selectedState === 'heat-unhealthy' ? 'TIMEOUT' : 
+                                       selectedState === 'heat-degraded' ? `${400 + Math.random() * 200}ms` :
+                                       `${150 + Math.random() * 100}ms`;
+                    const memory = selectedState === 'heat-unhealthy' ? 'N/A' : `${3 + Math.random() * 4}GB`;
+                    const status = selectedState === 'heat-unhealthy' ? 'Unhealthy' :
+                                  selectedState === 'heat-degraded' ? 'Degraded' : 'Healthy';
+                    
+                    hourElement.setAttribute('data-tooltip', 
+                        `${hour.toString().padStart(2, '0')}:00 - ${status}&#10;Response: ${responseTime}&#10;Memory: ${memory}&#10;Disk: 45%`
+                    );
+                    
+                    heatmapContainer.appendChild(hourElement);
+                }
+            }
+            
+            generateHeatmap();
+
+            // Initialize Charts
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    }
+                }
+            };
+
+            // Trend Line Chart
+            new Chart(document.getElementById('trend-line').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Response Time',
+                        data: Array.from({length: 24}, () => 150 + Math.random() * 200),
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Weekly Health Chart
+            new Chart(document.getElementById('weekly-health').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Uptime %',
+                        data: [99.2, 99.8, 98.1, 99.5, 99.9, 99.7, 99.3],
+                        backgroundColor: '#22c55e'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Peak Usage Chart
+            new Chart(document.getElementById('peak-usage').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Peak CPU %',
+                        data: [78, 82, 91, 76, 88, 45, 52],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Incident Correlation Chart
+            new Chart(document.getElementById('incident-correlation').getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'CPU vs Incidents',
+                        data: [
+                            {x: 65, y: 1}, {x: 78, y: 2}, {x: 82, y: 3},
+                            {x: 91, y: 5}, {x: 76, y: 1}, {x: 88, y: 4}
+                        ],
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'CPU Usage %' } },
+                        y: { title: { display: true, text: 'Incidents' } }
+                    }
+                }
+            });
+
+            // Monthly Heatmap Chart
+            new Chart(document.getElementById('month-heatmap').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+                    datasets: [{
+                        label: 'Daily Health Score',
+                        data: Array.from({length: 30}, () => 85 + Math.random() * 15),
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Tooltip functionality
+            const tooltip = document.getElementById('tooltip');
+            const tooltipElements = document.querySelectorAll('[data-tooltip]');
+
+            function showTooltip(element, event) {
+                const tooltipText = element.getAttribute('data-tooltip');
+                tooltip.innerHTML = tooltipText.replace(/&#10;/g, '<br>');
+                tooltip.classList.add('show');
+                
+                const rect = element.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+                tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+                
+                // Adjust if tooltip goes off screen
+                if (tooltip.offsetLeft < 10) {
+                    tooltip.style.left = '10px';
+                }
+                if (tooltip.offsetLeft + tooltip.offsetWidth > window.innerWidth - 10) {
+                    tooltip.style.left = window.innerWidth - tooltip.offsetWidth - 10 + 'px';
+                }
+            }
+
+            function hideTooltip() {
+                tooltip.classList.remove('show');
+            }
+
+            tooltipElements.forEach(element => {
+                element.addEventListener('mouseenter', (e) => showTooltip(element, e));
+                element.addEventListener('mouseleave', hideTooltip);
+            });
+
+            // Add event listeners for dynamically generated heatmap elements
+            document.addEventListener('mouseenter', (e) => {
+                if (e.target.hasAttribute('data-tooltip') && !tooltipElements.includes(e.target)) {
+                    showTooltip(e.target, e);
+                }
+            }, true);
+
+            document.addEventListener('mouseleave', (e) => {
+                if (e.target.hasAttribute('data-tooltip') && !tooltipElements.includes(e.target)) {
+                    hideTooltip();
+                }
+            }, true);
+
+            // Subscriber selection handling
+            document.getElementById('subscriber-select').addEventListener('change', (e) => {
+                console.log('Selected subscriber:', e.target.value);
+                // Here you would typically fetch new data for the selected subscriber
+            });
+
+            // Subtle real-time updates animation
+            setInterval(() => {
+                const metrics = document.querySelectorAll('.metric-value');
+                metrics.forEach(metric => {
+                    if (Math.random() > 0.98) {
+                        metric.style.background = '#f0f9ff';
+                        metric.style.padding = '2px 6px';
+                        metric.style.borderRadius = '4px';
+                        setTimeout(() => {
+                            metric.style.background = 'transparent';
+                            metric.style.padding = '0';
+                        }, 1500);
+                    }
+                });
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

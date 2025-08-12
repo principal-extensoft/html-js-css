@@ -1,0 +1,270 @@
+/* Theme 2: Federal Government - Clean, authoritative, and trustworthy */
+:root {
+    /* Primary Colors - Official government blue and red accents */
+    --primary: #1f2937;
+    --secondary: #6b7280;
+    --success: #16a34a;
+    --warning: #ea580c;
+    --error: #dc2626;
+    --accent-blue: #2563eb;
+    --accent-red: #dc2626;
+    
+    /* Background Colors */
+    --bg-primary: #f9fafb;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f3f4f6;
+    
+    /* Text Colors */
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-accent: #1f2937;
+    
+    /* Borders and Shadows */
+    --border: #d1d5db;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 4px;
+    
+    /* Font */
+    --font: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
+    
+    /* Component Specific */
+    --primary-alpha: rgba(37, 99, 235, 0.1);
+    --tab-bg: #e5e7eb;
+    --progress-bg: #e5e7eb;
+    --metric-bg: #f9fafb;
+    --metric-hover-bg: #f3f4f6;
+    --disk-color: #2563eb;
+    
+    /* Status Colors */
+    --status-healthy-bg: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    --status-healthy-color: #14532d;
+    --status-degraded-bg: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    --status-degraded-color: #9a3412;
+    --status-unhealthy-bg: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    --status-unhealthy-color: #991b1b;
+    
+    /* Trends */
+    --trend-up-bg: #fef2f2;
+    --trend-up-color: #dc2626;
+    --trend-down-bg: #f0fdf4;
+    --trend-down-color: #16a34a;
+    
+    /* Alerts */
+    --alert-bg: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    --alert-border: #fca5a5;
+    
+    /* Chart Placeholder */
+    --chart-placeholder-bg: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    --chart-placeholder-hover-bg: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    --chart-placeholder-hover-border: #9ca3af;
+    
+    /* Tooltip */
+    --tooltip-bg: #374151;
+    --tooltip-color: #f9fafb;
+    --tooltip-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Heatmap */
+    --heatmap-hover-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+/* Federal Government specific overrides */
+body {
+    background: #f9fafb;
+}
+
+.header {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    border-bottom: 3px solid var(--accent-blue);
+    padding: 1.25rem 2rem;
+}
+
+.header-title {
+    color: #ffffff;
+    font-family: 'Source Sans Pro', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.025em;
+}
+
+.header-title::before {
+    content: "🇺🇸 ";
+    margin-right: 0.5rem;
+}
+
+.card {
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.card h3 {
+    color: var(--text-primary);
+    font-family: 'Source Sans Pro', Arial, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.tab {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.tab.active {
+    background: var(--accent-blue);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.nav-btn, select {
+    background: #ffffff;
+    border: 2px solid #d1d5db;
+    font-weight: 500;
+}
+
+.nav-btn:hover, select:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.control-group label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-size: 0.75rem;
+}
+
+/* Official government styling for status items */
+.status-healthy {
+    border-left: 4px solid #16a34a;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.status-degraded {
+    border-left: 4px solid #ea580c;
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+}
+
+.status-unhealthy {
+    border-left: 4px solid #dc2626;
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+}
+
+.status-count {
+    font-family: 'Source Sans Pro', monospace;
+    font-weight: 800;
+}
+
+/* Clean, professional progress bars */
+.progress-bar {
+    background: #e5e7eb;
+    border: 1px solid #d1d5db;
+    height: 8px;
+}
+
+.progress-fill {
+    border-radius: 0;
+}
+
+.progress-ram {
+    background: #2563eb;
+}
+
+.progress-cpu {
+    background: #ea580c;
+}
+
+.progress-disk {
+    background: #7c3aed;
+}
+
+.progress-db {
+    background: #16a34a;
+}
+
+/* Metric items with official styling */
+.metric-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.metric-item:hover {
+    background: #f3f4f6;
+    border-left-color: var(--accent-red);
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.metric-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-size: 0.75rem;
+}
+
+.metric-value {
+    font-family: 'Source Sans Pro', monospace;
+    font-weight: 700;
+}
+
+/* Alerts with official government styling */
+.alerts {
+    background: #fef2f2;
+    border: 2px solid #fca5a5;
+    border-left: 4px solid var(--accent-red);
+}
+
+.alert-icon {
+    background: var(--accent-red);
+    font-weight: 700;
+}
+
+.alert-content h4 {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-size: 0.875rem;
+}
+
+/* Heatmap with clean, official colors */
+.heat-healthy {
+    background: #16a34a;
+    border: 1px solid #15803d;
+}
+
+.heat-degraded {
+    background: #ea580c;
+    border: 1px solid #c2410c;
+}
+
+.heat-unhealthy {
+    background: #dc2626;
+    border: 1px solid #b91c1c;
+}
+
+/* Typography improvements for official documents */
+.date-label {
+    font-family: 'Source Sans Pro', monospace;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* Clean table-like styling for better readability */
+.view-tabs {
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+}
