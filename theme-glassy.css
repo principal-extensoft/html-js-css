@@ -1,0 +1,497 @@
+/* Theme 4: Early 2000s Glassy/Aqua Style - Nostalgic glass buttons and glowy effects */
+:root {
+    /* Primary Colors - Bold and saturated */
+    --primary: #0099ff;
+    --secondary: #666666;
+    --success: #00cc44;
+    --warning: #ffaa00;
+    --error: #ff3366;
+    --accent-blue: #0099ff;
+    --accent-purple: #9966ff;
+    --accent-green: #00cc44;
+    
+    /* Background Colors - Dark for contrast */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #333333;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-accent: #00ccff;
+    
+    /* Borders and Shadows */
+    --border: #444444;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.8);
+    --glow-shadow: 0 0 20px rgba(0, 153, 255, 0.5);
+    --radius: 12px;
+    
+    /* Font */
+    --font: 'Trebuchet MS', 'Arial', sans-serif;
+    
+    /* Component Specific */
+    --primary-alpha: rgba(0, 153, 255, 0.3);
+    --tab-bg: linear-gradient(180deg, #444444 0%, #222222 100%);
+    --progress-bg: #333333;
+    --metric-bg: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+    --metric-hover-bg: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%);
+    --disk-color: #00ccff;
+    --network-color: #9966ff;
+    
+    /* Status Colors with glassy effects */
+    --status-healthy-bg: linear-gradient(180deg, rgba(0, 204, 68, 0.8) 0%, rgba(0, 153, 51, 0.8) 50%, rgba(0, 102, 34, 0.8) 100%);
+    --status-healthy-color: #ffffff;
+    --status-degraded-bg: linear-gradient(180deg, rgba(255, 170, 0, 0.8) 0%, rgba(204, 136, 0, 0.8) 50%, rgba(153, 102, 0, 0.8) 100%);
+    --status-degraded-color: #ffffff;
+    --status-unhealthy-bg: linear-gradient(180deg, rgba(255, 51, 102, 0.8) 0%, rgba(204, 41, 82, 0.8) 50%, rgba(153, 31, 61, 0.8) 100%);
+    --status-unhealthy-color: #ffffff;
+    
+    /* Trends */
+    --trend-up-bg: rgba(255, 51, 102, 0.3);
+    --trend-up-color: #ff99bb;
+    --trend-down-bg: rgba(0, 204, 68, 0.3);
+    --trend-down-color: #66ff99;
+    
+    /* Alerts */
+    --alert-bg: linear-gradient(180deg, rgba(255, 51, 102, 0.2) 0%, rgba(153, 31, 61, 0.2) 100%);
+    --alert-border: rgba(255, 51, 102, 0.5);
+    
+    /* Chart Placeholder */
+    --chart-placeholder-bg: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+    --chart-placeholder-hover-bg: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%);
+    --chart-placeholder-hover-border: #0099ff;
+    
+    /* Tooltip */
+    --tooltip-bg: rgba(0, 0, 0, 0.9);
+    --tooltip-color: #ffffff;
+    --tooltip-shadow: 0 0 30px rgba(0, 153, 255, 0.6);
+    
+    /* Heatmap */
+    --heatmap-hover-shadow: 0 0 15px rgba(0, 153, 255, 0.8);
+}
+
+/* Early 2000s Glassy specific overrides */
+body {
+    background: radial-gradient(ellipse at center, #2a2a2a 0%, #1a1a1a 100%);
+    font-weight: bold;
+}
+
+/* Glassy header with aqua-style gradient */
+.header {
+    background: linear-gradient(180deg, 
+        rgba(0, 153, 255, 0.8) 0%, 
+        rgba(0, 102, 204, 0.8) 20%, 
+        rgba(0, 51, 153, 0.8) 80%, 
+        rgba(0, 25, 102, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.header-title {
+    color: #ffffff;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+    font-weight: bold;
+    text-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.8);
+    font-size: 1.75rem;
+}
+
+/* Glassy cards with aqua-style effects */
+.card {
+    background: linear-gradient(180deg, 
+        rgba(58, 58, 58, 0.9) 0%, 
+        rgba(42, 42, 42, 0.9) 50%, 
+        rgba(26, 26, 26, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+}
+
+.card:hover {
+    background: linear-gradient(180deg, 
+        rgba(68, 68, 68, 0.9) 0%, 
+        rgba(52, 52, 52, 0.9) 50%, 
+        rgba(36, 36, 36, 0.9) 100%);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(0, 153, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+.card h3 {
+    color: #ffffff;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+    font-weight: bold;
+    text-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Glassy tabs with aqua button style */
+.view-tabs {
+    background: linear-gradient(180deg, #444444 0%, #222222 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    padding: 6px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.tab {
+    background: linear-gradient(180deg, 
+        rgba(102, 102, 102, 0.8) 0%, 
+        rgba(68, 68, 68, 0.8) 50%, 
+        rgba(34, 34, 34, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    background: linear-gradient(180deg, 
+        rgba(136, 136, 136, 0.8) 0%, 
+        rgba(102, 102, 102, 0.8) 50%, 
+        rgba(68, 68, 68, 0.8) 100%);
+    box-shadow: 
+        0 0 10px rgba(0, 153, 255, 0.5),
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.tab.active {
+    background: linear-gradient(180deg, 
+        rgba(0, 153, 255, 0.9) 0%, 
+        rgba(0, 102, 204, 0.9) 50%, 
+        rgba(0, 51, 153, 0.9) 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 0 15px rgba(0, 153, 255, 0.7),
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Glassy buttons and controls */
+.nav-btn, select {
+    background: linear-gradient(180deg, 
+        rgba(102, 102, 102, 0.9) 0%, 
+        rgba(68, 68, 68, 0.9) 50%, 
+        rgba(34, 34, 34, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn:hover, select:hover {
+    background: linear-gradient(180deg, 
+        rgba(136, 136, 136, 0.9) 0%, 
+        rgba(102, 102, 102, 0.9) 50%, 
+        rgba(68, 68, 68, 0.9) 100%);
+    box-shadow: 
+        0 0 12px rgba(0, 153, 255, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(0, 153, 255, 0.5);
+}
+
+.nav-btn:active, select:active {
+    background: linear-gradient(180deg, 
+        rgba(34, 34, 34, 0.9) 0%, 
+        rgba(68, 68, 68, 0.9) 50%, 
+        rgba(102, 102, 102, 0.9) 100%);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 8px rgba(0, 153, 255, 0.4);
+}
+
+/* Glassy status items with aqua colors */
+.status-healthy {
+    background: linear-gradient(180deg, 
+        rgba(0, 204, 68, 0.9) 0%, 
+        rgba(0, 153, 51, 0.9) 50%, 
+        rgba(0, 102, 34, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(0, 204, 68, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.status-degraded {
+    background: linear-gradient(180deg, 
+        rgba(255, 170, 0, 0.9) 0%, 
+        rgba(204, 136, 0, 0.9) 50%, 
+        rgba(153, 102, 0, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(255, 170, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.status-unhealthy {
+    background: linear-gradient(180deg, 
+        rgba(255, 51, 102, 0.9) 0%, 
+        rgba(204, 41, 82, 0.9) 50%, 
+        rgba(153, 31, 61, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(255, 51, 102, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.status-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.8),
+        0 0 20px currentColor,
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Glassy progress bars */
+.progress-bar {
+    background: linear-gradient(180deg, #444444 0%, #222222 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+    height: 10px;
+}
+
+.progress-fill {
+    border-radius: 50px;
+    box-shadow: 
+        0 0 8px currentColor,
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.6), 
+        transparent);
+    animation: glassyShine 3s infinite;
+}
+
+@keyframes glassyShine {
+    0% { left: -100%; }
+    50% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-ram {
+    background: linear-gradient(180deg, 
+        rgba(0, 153, 255, 0.9) 0%, 
+        rgba(0, 102, 204, 0.9) 50%, 
+        rgba(0, 51, 153, 0.9) 100%);
+}
+
+.progress-cpu {
+    background: linear-gradient(180deg, 
+        rgba(255, 170, 0, 0.9) 0%, 
+        rgba(204, 136, 0, 0.9) 50%, 
+        rgba(153, 102, 0, 0.9) 100%);
+}
+
+.progress-disk {
+    background: linear-gradient(180deg, 
+        rgba(0, 204, 255, 0.9) 0%, 
+        rgba(0, 153, 204, 0.9) 50%, 
+        rgba(0, 102, 153, 0.9) 100%);
+}
+
+.progress-db {
+    background: linear-gradient(180deg, 
+        rgba(0, 204, 68, 0.9) 0%, 
+        rgba(0, 153, 51, 0.9) 50%, 
+        rgba(0, 102, 34, 0.9) 100%);
+}
+
+/* Glassy metric items */
+.metric-item {
+    background: linear-gradient(180deg, 
+        rgba(58, 58, 58, 0.8) 0%, 
+        rgba(42, 42, 42, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.metric-item:hover {
+    background: linear-gradient(180deg, 
+        rgba(68, 68, 68, 0.8) 0%, 
+        rgba(52, 52, 52, 0.8) 100%);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(0, 153, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateX(6px);
+}
+
+/* Glassy heatmap with glow effects */
+.heat-healthy {
+    background: linear-gradient(180deg, 
+        rgba(0, 204, 68, 0.9) 0%, 
+        rgba(0, 153, 51, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.heat-degraded {
+    background: linear-gradient(180deg, 
+        rgba(255, 170, 0, 0.9) 0%, 
+        rgba(204, 136, 0, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.heat-unhealthy {
+    background: linear-gradient(180deg, 
+        rgba(255, 51, 102, 0.9) 0%, 
+        rgba(204, 41, 82, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.heatmap-hour:hover {
+    transform: scale(1.2);
+    box-shadow: 
+        0 0 20px currentColor,
+        0 4px 8px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Glassy alerts */
+.alerts {
+    background: linear-gradient(180deg, 
+        rgba(255, 51, 102, 0.2) 0%, 
+        rgba(153, 31, 61, 0.2) 100%);
+    border: 1px solid rgba(255, 51, 102, 0.4);
+    border-radius: var(--radius);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.alert-item {
+    background: linear-gradient(180deg, 
+        rgba(58, 58, 58, 0.9) 0%, 
+        rgba(42, 42, 42, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.alert-item:hover {
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(255, 51, 102, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.alert-icon {
+    background: linear-gradient(180deg, 
+        rgba(255, 51, 102, 0.9) 0%, 
+        rgba(204, 41, 82, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.6),
+        0 0 8px rgba(255, 51, 102, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Enhanced glassy tooltip */
+.tooltip {
+    background: linear-gradient(180deg, 
+        rgba(0, 0, 0, 0.95) 0%, 
+        rgba(26, 26, 26, 0.95) 100%);
+    border: 1px solid rgba(0, 153, 255, 0.5);
+    border-radius: 8px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(0, 153, 255, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.tooltip::before {
+    border-bottom-color: rgba(0, 153, 255, 0.5);
+}
+
+/* Label styling */
+.control-group label, .date-label {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Text shadows for better readability */
+.metric-label, .progress-label {
+    color: #cccccc;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.metric-value, .progress-value {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}

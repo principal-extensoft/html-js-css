@@ -1,0 +1,438 @@
+/* Theme 5: Mainframe Terminal - Classic amber/green on black for the old-school programmers */
+:root {
+    /* Primary Colors - Terminal amber and green */
+    --primary: #00ff00;
+    --secondary: #333333;
+    --success: #00ff00;
+    --warning: #ffbf00;
+    --error: #ff4444;
+    --accent-blue: #00cccc;
+    --accent-purple: #ff00ff;
+    --accent-green: #00ff00;
+    
+    /* Background Colors - True terminal black */
+    --bg-primary: #000000;
+    --bg-secondary: #111111;
+    --bg-tertiary: #222222;
+    
+    /* Text Colors - Classic terminal amber */
+    --text-primary: #ffbf00;
+    --text-secondary: #ccaa00;
+    --text-accent: #00ff00;
+    
+    /* Borders and Shadows */
+    --border: #333333;
+    --shadow: 0 0 4px rgba(255, 191, 0, 0.3);
+    --shadow-lg: 0 0 8px rgba(255, 191, 0, 0.5);
+    --glow-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
+    --radius: 0px; /* No rounded corners - pure terminal */
+    
+    /* Font - Monospace only */
+    --font: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+    
+    /* Component Specific */
+    --primary-alpha: rgba(0, 255, 0, 0.2);
+    --tab-bg: #111111;
+    --progress-bg: #222222;
+    --metric-bg: #111111;
+    --metric-hover-bg: #222222;
+    --disk-color: #00ffff;
+    
+    /* Status Colors - Terminal style */
+    --status-healthy-bg: #000000;
+    --status-healthy-color: #00ff00;
+    --status-degraded-bg: #000000;
+    --status-degraded-color: #ffbf00;
+    --status-unhealthy-bg: #000000;
+    --status-unhealthy-color: #ff4444;
+    
+    /* Trends */
+    --trend-up-bg: rgba(255, 68, 68, 0.2);
+    --trend-up-color: #ff4444;
+    --trend-down-bg: rgba(0, 255, 0, 0.2);
+    --trend-down-color: #00ff00;
+    
+    /* Alerts */
+    --alert-bg: #111111;
+    --alert-border: #ff4444;
+    
+    /* Chart Placeholder */
+    --chart-placeholder-bg: #111111;
+    --chart-placeholder-hover-bg: #222222;
+    --chart-placeholder-hover-border: #00ff00;
+    
+    /* Tooltip */
+    --tooltip-bg: #000000;
+    --tooltip-color: #ffbf00;
+    --tooltip-shadow: 0 0 8px rgba(255, 191, 0, 0.8);
+    
+    /* Heatmap */
+    --heatmap-hover-shadow: 0 0 8px rgba(0, 255, 0, 1.0);
+}
+
+/* Mainframe terminal specific overrides */
+body {
+    background: #000000;
+    font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+    font-weight: normal;
+    letter-spacing: 0.05em;
+}
+
+/* Terminal-style header */
+.header {
+    background: #000000;
+    border: 2px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.header-title {
+    color: #ffbf00;
+    font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 4px rgba(255, 191, 0, 0.8);
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Terminal cards - simple black boxes */
+.card {
+    background: #000000;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.card:hover {
+    background: #111111;
+    border-color: #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+    transform: none;
+}
+
+.card h3 {
+    color: #ffbf00;
+    font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+    font-weight: bold;
+    text-shadow: 0 0 4px rgba(255, 191, 0, 0.6);
+    border-bottom: 1px solid #333333;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Terminal tabs */
+.view-tabs {
+    background: #000000;
+    border: 1px solid #333333;
+    border-radius: 0;
+    padding: 4px;
+    box-shadow: none;
+}
+
+.tab {
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    color: #ffbf00;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(255, 191, 0, 0.8);
+    box-shadow: none;
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tab:hover {
+    background: #222222;
+    border-color: #00ff00;
+    color: #00ff00;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.8);
+    box-shadow: none;
+}
+
+.tab.active {
+    background: #000000;
+    border-color: #00ff00;
+    color: #00ff00;
+    text-shadow: 0 0 6px rgba(0, 255, 0, 1.0);
+    box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+/* Terminal buttons and controls */
+.nav-btn, select {
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    color: #ffbf00;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(255, 191, 0, 0.8);
+    box-shadow: none;
+    font-family: 'Courier New', 'Monaco', 'Lucida Console', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nav-btn:hover, select:hover {
+    background: #222222;
+    border-color: #00ff00;
+    color: #00ff00;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.8);
+    box-shadow: none;
+}
+
+.nav-btn:active, select:active {
+    background: #000000;
+    border-color: #ffbf00;
+    color: #ffbf00;
+    box-shadow: inset 0 0 4px rgba(255, 191, 0, 0.5);
+}
+
+/* Terminal status items */
+.status-healthy {
+    background: #000000;
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.8);
+    box-shadow: none;
+}
+
+.status-degraded {
+    background: #000000;
+    border: 1px solid #ffbf00;
+    color: #ffbf00;
+    text-shadow: 0 0 4px rgba(255, 191, 0, 0.8);
+    box-shadow: none;
+}
+
+.status-unhealthy {
+    background: #000000;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    text-shadow: 0 0 4px rgba(255, 68, 68, 0.8);
+    box-shadow: none;
+}
+
+.status-item:hover {
+    transform: none;
+    box-shadow: 0 0 12px currentColor;
+    background: #111111;
+}
+
+/* Terminal progress bars */
+.progress-bar {
+    background: #222222;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+    height: 8px;
+}
+
+.progress-fill {
+    border-radius: 0;
+    box-shadow: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.8), 
+        transparent);
+    animation: terminalScan 2s infinite linear;
+}
+
+@keyframes terminalScan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-ram {
+    background: #00ff00;
+    box-shadow: 0 0 4px rgba(0, 255, 0, 0.6);
+}
+
+.progress-cpu {
+    background: #ffbf00;
+    box-shadow: 0 0 4px rgba(255, 191, 0, 0.6);
+}
+
+.progress-disk {
+    background: #00ffff;
+    box-shadow: 0 0 4px rgba(0, 255, 255, 0.6);
+}
+
+.progress-db {
+    background: #ff00ff;
+    box-shadow: 0 0 4px rgba(255, 0, 255, 0.6);
+}
+
+/* Terminal metric items */
+.metric-item {
+    background: #000000;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.metric-item:hover {
+    background: #111111;
+    border-color: #00ff00;
+    box-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+    transform: none;
+}
+
+/* Terminal heatmap */
+.heat-healthy {
+    background: #003300;
+    border: 1px solid #00ff00;
+    box-shadow: 0 0 2px rgba(0, 255, 0, 0.6);
+}
+
+.heat-degraded {
+    background: #332200;
+    border: 1px solid #ffbf00;
+    box-shadow: 0 0 2px rgba(255, 191, 0, 0.6);
+}
+
+.heat-unhealthy {
+    background: #330000;
+    border: 1px solid #ff4444;
+    box-shadow: 0 0 2px rgba(255, 68, 68, 0.6);
+}
+
+.heatmap-hour:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* Terminal alerts */
+.alerts {
+    background: #000000;
+    border: 1px solid #ff4444;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.alert-item {
+    background: #000000;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.alert-item:hover {
+    border-color: #ff4444;
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+}
+
+.alert-icon {
+    background: #000000;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.6);
+}
+
+/* Terminal tooltip */
+.tooltip {
+    background: #000000;
+    border: 1px solid #ffbf00;
+    border-radius: 0;
+    box-shadow: 0 0 8px rgba(255, 191, 0, 0.8);
+    backdrop-filter: none;
+}
+
+.tooltip::before {
+    border-bottom-color: #ffbf00;
+}
+
+/* Terminal text styling */
+.control-group label, .date-label {
+    color: #ffbf00;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(255, 191, 0, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-label, .progress-label {
+    color: #ccaa00;
+    font-weight: normal;
+    text-shadow: 0 0 2px rgba(204, 170, 0, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-value, .progress-value {
+    color: #ffbf00;
+    font-weight: bold;
+    text-shadow: 0 0 4px rgba(255, 191, 0, 0.8);
+    letter-spacing: 0.1em;
+}
+
+/* Terminal-specific cursor effect for active elements */
+.tab.active::after,
+.nav-btn:focus::after,
+select:focus::after {
+    content: '█';
+    color: #00ff00;
+    animation: terminalBlink 1s infinite;
+    margin-left: 0.5em;
+}
+
+@keyframes terminalBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Terminal scan lines effect for the whole page */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        transparent 0%,
+        rgba(0, 255, 0, 0.03) 50%,
+        transparent 100%
+    );
+    background-size: 100% 4px;
+    animation: terminalScanLines 0.1s infinite linear;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+@keyframes terminalScanLines {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 4px; }
+}
+
+/* Additional terminal styling for authenticity */
+* {
+    font-variant-ligatures: none;
+    text-rendering: optimizeSpeed;
+}
+
+/* Make selections look terminal-like */
+::selection {
+    background: #00ff00;
+    color: #000000;
+}
+
+::-moz-selection {
+    background: #00ff00;
+    color: #000000;
+}

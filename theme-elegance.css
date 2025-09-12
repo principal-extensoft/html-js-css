@@ -1,0 +1,342 @@
+/* Theme 3: Business Elegance - Sophisticated, modern, and refined */
+:root {
+    /* Primary Colors - Sophisticated purple and gold accents */
+    --primary: #7c3aed;
+    --secondary: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #f43f5e;
+    --accent-purple: #8b5cf6;
+    --accent-gold: #f59e0b;
+    
+    /* Background Colors */
+    --bg-primary: #fefbff;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8fafc;
+    
+    /* Text Colors */
+    --text-primary: #1e1b4b;
+    --text-secondary: #64748b;
+    --text-accent: #7c3aed;
+    
+    /* Borders and Shadows */
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --radius: 16px;
+    
+    /* Font */
+    --font: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    
+    /* Component Specific */
+    --primary-alpha: rgba(124, 58, 237, 0.1);
+    --tab-bg: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    --progress-bg: #f1f5f9;
+    --metric-bg: linear-gradient(135deg, #fefbff 0%, #f8fafc 100%);
+    --metric-hover-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    --disk-color: #06b6d4;
+    
+    /* Status Colors */
+    --status-healthy-bg: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    --status-healthy-color: #047857;
+    --status-degraded-bg: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    --status-degraded-color: #92400e;
+    --status-unhealthy-bg: linear-gradient(135deg, #fef2f2 0%, #fecdd3 100%);
+    --status-unhealthy-color: #be123c;
+    
+    /* Trends */
+    --trend-up-bg: #fef2f2;
+    --trend-up-color: #f43f5e;
+    --trend-down-bg: #ecfdf5;
+    --trend-down-color: #10b981;
+    
+    /* Alerts */
+    --alert-bg: linear-gradient(135deg, #fef2f2 0%, #fecdd3 100%);
+    --alert-border: #fda4af;
+    
+    /* Chart Placeholder */
+    --chart-placeholder-bg: linear-gradient(135deg, #fefbff 0%, #f8fafc 100%);
+    --chart-placeholder-hover-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    --chart-placeholder-hover-border: #cbd5e1;
+    
+    /* Tooltip */
+    --tooltip-bg: #1e1b4b;
+    --tooltip-color: #fefbff;
+    --tooltip-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    
+    /* Heatmap */
+    --heatmap-hover-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
+}
+
+/* Business Elegance specific overrides */
+body {
+    background: radial-gradient(ellipse at top, #fefbff, #f8fafc);
+    font-weight: 400;
+}
+
+.header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.header-title {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    font-size: 1.75rem;
+}
+
+.card {
+    background: linear-gradient(135deg, #ffffff 0%, #fefbff 100%);
+    border: 1px solid rgba(124, 58, 237, 0.1);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    border-color: rgba(124, 58, 237, 0.3);
+    box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.1), 0 10px 10px -5px rgba(124, 58, 237, 0.04);
+    transform: translateY(-4px);
+}
+
+.card h3 {
+    background: linear-gradient(135deg, #1e1b4b 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    font-size: 1.25rem;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    border-radius: 12px;
+}
+
+.tab.active {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.25);
+    font-weight: 700;
+}
+
+.nav-btn, select {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover, select:hover {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transform: translateY(-1px);
+}
+
+.control-group label {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+}
+
+/* Elegant status items with subtle animations */
+.status-healthy {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.1);
+}
+
+.status-degraded {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.1);
+}
+
+.status-unhealthy {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecdd3 100%);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    box-shadow: 0 4px 14px 0 rgba(244, 63, 94, 0.1);
+}
+
+.status-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.status-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+}
+
+/* Sophisticated progress bars */
+.progress-bar {
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+    border: 1px solid rgba(124, 58, 237, 0.1);
+    height: 8px;
+    border-radius: 50px;
+}
+
+.progress-item:hover .progress-bar {
+    height: 10px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+}
+
+.progress-fill {
+    border-radius: 50px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-ram {
+    background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+}
+
+.progress-cpu {
+    background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+}
+
+.progress-disk {
+    background: linear-gradient(90deg, #06b6d4 0%, #38bdf8 100%);
+}
+
+.progress-db {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+/* Refined metric items */
+.metric-item {
+    background: linear-gradient(135deg, #fefbff 0%, #f8fafc 100%);
+    border: 1px solid rgba(124, 58, 237, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-color: rgba(124, 58, 237, 0.3);
+    transform: translateX(6px);
+    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.1);
+}
+
+.metric-label {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+.metric-value {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+/* Elegant alerts */
+.alerts {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecdd3 100%);
+    border: 1px solid rgba(244, 63, 94, 0.2);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 14px 0 rgba(244, 63, 94, 0.1);
+}
+
+.alert-item {
+    background: linear-gradient(135deg, #ffffff 0%, #fefbff 100%);
+    border: 1px solid rgba(244, 63, 94, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.alert-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(244, 63, 94, 0.15);
+}
+
+.alert-icon {
+    background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+    box-shadow: 0 4px 14px 0 rgba(244, 63, 94, 0.3);
+}
+
+.alert-content h4 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+}
+
+/* Sophisticated heatmap */
+.heat-healthy {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.heat-degraded {
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.heat-unhealthy {
+    background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.2);
+}
+
+.heatmap-hour:hover {
+    transform: scale(1.2);
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
+}
+
+/* Enhanced typography */
+.date-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+}
+
+/* Smooth view transitions */
+.view {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.view.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Enhanced tooltips */
+.tooltip {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
