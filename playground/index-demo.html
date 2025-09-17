@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Select Demo - One Data Structure, Multiple Presentations</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --fg: #e0e0e0;
+      --border: #404040;
+      --accent: #4a9eff;
+      --accent-hover: #66b3ff;
+      --surface: #2a2a2a;
+      --muted: #888;
+      --success: #4ade80;
+      --warning: #fbbf24;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      margin: 0;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: var(--accent);
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .demo-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .demo-section h2 {
+      margin-top: 0;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    /* Shared fieldset styles */
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin: 1rem 0;
+      padding: 0;
+      background: var(--bg);
+    }
+
+    legend {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: var(--fg);
+      font-weight: 500;
+      transition: color 0.2s, background-color 0.2s;
+      user-select: none;
+    }
+
+    legend:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Multi-select facet styles */
+    .facet .options {
+      margin-top: 12px;
+      max-height: 300px;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out, opacity 0.15s ease-out;
+      opacity: 1;
+      padding: 0.5rem;
+    }
+
+    .facet .options.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      padding: 0;
+    }
+
+    .facet .opt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid transparent;
+    }
+
+    .facet .opt:hover {
+      border-bottom-color: var(--border);
+    }
+
+    .facet .label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .facet .count {
+      min-width: 6ch;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+    }
+
+    /* Single-select dropdown styles */
+    .dropdown {
+      position: relative;
+      min-width: 200px;
+    }
+
+    .dropdown .selected-value {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .dropdown .selected-value:hover {
+      border-color: var(--accent);
+    }
+
+    .dropdown .arrow {
+      transition: transform 0.2s;
+      color: var(--muted);
+    }
+
+    .dropdown.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown .options {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-top: 2px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .dropdown.open .options {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .dropdown .opt {
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dropdown .opt:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .dropdown .opt.selected {
+      background: rgba(74, 158, 255, 0.2);
+    }
+
+    /* Tokens for multi-select */
+    .tokens {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.5rem;
+      min-height: 1.5rem;
+    }
+
+    .token {
+      background: var(--accent);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .token .remove {
+      cursor: pointer;
+      padding: 0 0.25rem;
+      border-radius: 50%;
+      transition: background-color 0.15s;
+    }
+
+    .token .remove:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .flag {
+      font-size: 1.1rem;
+      margin-right: 0.25rem;
+    }
+
+    /* Results display */
+    .results {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      min-height: 60px;
+    }
+
+    .results h3 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Unified Select Demo</h1>
+    <p style="text-align: center; color: var(--muted); margin-bottom: 2rem;">
+      Same data structure, multiple presentation modes with rich SVG templating
+    </p>
+
+    <div class="demo-grid">
+      <!-- Multi-select Facets -->
+      <div class="demo-section">
+        <h2>Multi-Select Facets</h2>
+        <p>Expandable fieldsets with checkboxes and token display</p>
+        <div id="facets-container"></div>
+      </div>
+
+      <!-- Single-select Dropdowns -->
+      <div class="demo-section">
+        <h2>Flexible Dropdowns</h2>
+        <p>Language (single-select) & Publisher (multi-select dropdowns)</p>
+        <div id="dropdowns-container"></div>
+      </div>
+    </div>
+
+    <div class="results">
+      <h3>Combined Selection Results</h3>
+      <div id="results-output"></div>
+    </div>
+  </div>
+
+  <script>
+    // Unified data structure - works for both presentations
+    const selectData = [
+      {
+        id: 'genre',
+        name: 'Genre',
+        display: 'Book Genre',
+        mode: 'multi', // multi or single
+        presentation: 'facet', // facet or dropdown
+        hasAll: true, // Show "All" option for multi-select
+        items: [
+          { value: 'fiction', display: 'Fiction', count: 1247 },
+          { value: 'mystery', display: 'Mystery & Thriller', count: 892 },
+          { value: 'romance', display: 'Romance', count: 634 },
+          { value: 'scifi', display: 'Science Fiction', count: 445 },
+          { value: 'fantasy', display: 'Fantasy', count: 398 }
+        ]
+      },
+      {
+        id: 'language',
+        name: 'Language',
+        display: 'Language',
+        mode: 'single',
+        presentation: 'dropdown',
+        hasAll: false, // Not applicable for single-select
+        items: [
+          { value: 'en', display: 'English', count: 3421, flag: '🇺🇸' },
+          { value: 'es', display: 'Spanish', count: 892, flag: '🇪🇸' },
+          { value: 'fr', display: 'French', count: 634, flag: '🇫🇷' },
+          { value: 'de', display: 'German', count: 445, flag: '🇩🇪' },
+          { value: 'it', display: 'Italian', count: 298, flag: '🇮🇹' }
+        ]
+      },
+      {
+        id: 'publisher',
+        name: 'Publisher',
+        display: 'Publisher',
+        mode: 'multi', // Changed to multi to show dropdown multi-select
+        presentation: 'dropdown',
+        hasAll: true, // Show "All" option
+        items: [
+          { value: 'penguin', display: 'Penguin Random House', count: 567 },
+          { value: 'harpercollins', display: 'HarperCollins', count: 432 },
+          { value: 'macmillan', display: 'Macmillan', count: 298 },
+          { value: 'simon', display: 'Simon & Schuster', count: 234 },
+          { value: 'hachette', display: 'Hachette', count: 189 }
+        ]
+      },
+      {
+        id: 'rating',
+        name: 'Rating',
+        display: 'Customer Rating',
+        mode: 'multi',
+        presentation: 'facet',
+        items: [
+          { value: '5star', display: '5 Stars', count: 234 },
+          { value: '4star', display: '4 Stars & Up', count: 892 },
+          { value: '3star', display: '3 Stars & Up', count: 1456 },
+          { value: '2star', display: '2 Stars & Up', count: 1789 }
+        ]
+      },
+      {
+        id: 'card-suits',
+        name: 'Card Suits',
+        display: 'Playing Card Suits',
+        mode: 'multi',
+        presentation: 'dropdown',
+        hasAll: true, // Show "All Suits" option
+        items: [
+          { 
+            value: 'hearts', 
+            display: 'Hearts', 
+            count: 13,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#e53e3e"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
+          },
+          { 
+            value: 'diamonds', 
+            display: 'Diamonds', 
+            count: 13,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#e53e3e"><path d="M12 2l5 10-5 10-5-10z"/></svg>'
+          },
+          { 
+            value: 'clubs', 
+            display: 'Clubs', 
+            count: 13,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#2d3748"><path d="M12 2C9 2 7 4 7 7c0 1.5.5 2.5 1.5 3.5-.5.5-1.5 1.5-1.5 3 0 2.5 2 4.5 4.5 4.5.5 0 1-.1 1.5-.3V20h-2v2h6v-2h-2v-2.3c.5.2 1 .3 1.5.3 2.5 0 4.5-2 4.5-4.5 0-1.5-1-2.5-1.5-3C16.5 9.5 17 8.5 17 7c0-3-2-5-5-5z"/></svg>'
+          },
+          { 
+            value: 'spades', 
+            display: 'Spades', 
+            count: 13,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#2d3748"><path d="M12 2l7 9c0 2.21-1.79 4-4 4-.83 0-1.59-.24-2.24-.65.15.38.24.79.24 1.22 0 1.66-1.34 3-3 3s-3-1.34-3-3c0-.43.09-.84.24-1.22C6.59 14.76 5.83 15 5 15c-2.21 0-4-1.79-4-4l7-9z"/></svg>'
+          }
+        ]
+      },
+      {
+        id: 'card-colors',
+        name: 'Card Colors',
+        display: 'Card Colors',
+        mode: 'single',
+        presentation: 'dropdown',
+        hasAll: false, // Not applicable for single-select
+        items: [
+          { 
+            value: 'red', 
+            display: 'Red Cards', 
+            count: 26,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#e53e3e"><circle cx="12" cy="12" r="10"/></svg>'
+          },
+          { 
+            value: 'black', 
+            display: 'Black Cards', 
+            count: 26,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#2d3748"><circle cx="12" cy="12" r="10"/></svg>'
+          }
+        ]
+      },
+      {
+        id: 'card-ranks',
+        name: 'Card Ranks',
+        display: 'Card Ranks',
+        mode: 'multi',
+        presentation: 'facet',
+        hasAll: true, // Show "All Ranks" option
+        items: [
+          { 
+            value: 'face', 
+            display: 'Face Cards', 
+            count: 12,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#f6ad55"><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 3V5H9V3L3 7V9H12C16.42 9 20 12.58 20 17V19H22V17C22 13.13 19.62 9.91 16.1 9.21C17.93 8.48 19.5 7.22 20.71 5.71L21 9Z"/></svg>'
+          },
+          { 
+            value: 'ace', 
+            display: 'Aces', 
+            count: 4,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#9f7aea"><path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"/></svg>'
+          },
+          { 
+            value: 'number', 
+            display: 'Number Cards', 
+            count: 36,
+            svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#38a169"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>'
+          }
+        ]
+      }
+    ];
+
+    // Initialize selections
+    selectData.forEach(group => {
+      group.items.forEach(item => {
+        item.selected = false;
+      });
+    });
+
+    // Helper functions for "All" option logic
+    function getItemsWithAll(data) {
+      if (data.mode === 'multi' && data.hasAll) {
+        const totalCount = data.items.reduce((sum, item) => sum + item.count, 0);
+        const allOption = {
+          value: `${data.id}_all`,
+          display: `All ${data.display}`,
+          count: totalCount,
+          isAllOption: true,
+          selected: false
+        };
+        return [allOption, ...data.items];
+      }
+      return data.items;
+    }
+
+    function updateAllOptionState(data) {
+      if (data.mode !== 'multi' || !data.hasAll) return;
+      
+      const allItems = getItemsWithAll(data);
+      const allOption = allItems[0];
+      const regularItems = allItems.slice(1);
+      
+      // Check if all regular items are selected
+      const allRegularSelected = regularItems.every(item => item.selected);
+      allOption.selected = allRegularSelected;
+    }
+
+    function handleAllOptionClick(data, allOption) {
+      if (allOption.selected) {
+        // "All" is selected, so deselect everything
+        data.items.forEach(item => item.selected = false);
+        allOption.selected = false;
+      } else {
+        // "All" is not selected, so select everything
+        data.items.forEach(item => item.selected = true);
+        allOption.selected = true;
+      }
+    }
+
+    // Render multi-select facet
+    function renderFacet(data) {
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'facet';
+
+      const legend = document.createElement('legend');
+      legend.textContent = data.display;
+      legend.addEventListener('click', () => {
+        const options = fieldset.querySelector('.options');
+        options.classList.toggle('collapsed');
+      });
+
+      const tokens = document.createElement('div');
+      tokens.className = 'tokens';
+
+      const options = document.createElement('div');
+      options.className = 'options collapsed';
+
+      const itemsToRender = getItemsWithAll(data);
+      itemsToRender.forEach((item, index) => {
+        const opt = document.createElement('div');
+        opt.className = 'opt';
+
+        const label = document.createElement('label');
+        label.className = 'label';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.selected;
+        checkbox.addEventListener('change', () => {
+          if (item.isAllOption) {
+            handleAllOptionClick(data, item);
+          } else {
+            item.selected = checkbox.checked;
+            updateAllOptionState(data);
+          }
+          updateTokens();
+          updateResults();
+          // Update all checkboxes to reflect new state
+          const allCheckboxes = options.querySelectorAll('input[type="checkbox"]');
+          itemsToRender.forEach((itm, idx) => {
+            allCheckboxes[idx].checked = itm.selected;
+          });
+        });
+
+        const displaySpan = document.createElement('span');
+        if (item.flag) {
+          const flag = document.createElement('span');
+          flag.className = 'flag';
+          flag.textContent = item.flag;
+          displaySpan.appendChild(flag);
+        }
+        if (item.svg) {
+          const svgWrapper = document.createElement('span');
+          svgWrapper.className = 'svg-icon';
+          svgWrapper.innerHTML = item.svg;
+          svgWrapper.style.marginRight = '0.5rem';
+          svgWrapper.style.display = 'inline-flex';
+          svgWrapper.style.alignItems = 'center';
+          displaySpan.appendChild(svgWrapper);
+        }
+        
+        // Style "All" option differently
+        if (item.isAllOption) {
+          displaySpan.style.fontWeight = '600';
+          displaySpan.style.color = 'var(--accent)';
+        }
+        
+        displaySpan.appendChild(document.createTextNode(item.display));
+
+        label.appendChild(checkbox);
+        label.appendChild(displaySpan);
+
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = item.count.toLocaleString();
+
+        opt.appendChild(label);
+        opt.appendChild(count);
+        options.appendChild(opt);
+      });
+
+      function updateTokens() {
+        tokens.innerHTML = '';
+        data.items.filter(item => item.selected).forEach(item => {
+          const token = document.createElement('div');
+          token.className = 'token';
+
+          if (item.flag) {
+            const flag = document.createElement('span');
+            flag.textContent = item.flag;
+            token.appendChild(flag);
+          }
+
+          if (item.svg) {
+            const svgWrapper = document.createElement('span');
+            svgWrapper.innerHTML = item.svg;
+            svgWrapper.style.marginRight = '0.25rem';
+            svgWrapper.style.display = 'inline-flex';
+            svgWrapper.style.alignItems = 'center';
+            // Make SVG smaller in tokens
+            const svg = svgWrapper.querySelector('svg');
+            if (svg) {
+              svg.setAttribute('width', '12');
+              svg.setAttribute('height', '12');
+            }
+            token.appendChild(svgWrapper);
+          }
+
+          const text = document.createElement('span');
+          text.textContent = item.display;
+          token.appendChild(text);
+
+          const remove = document.createElement('span');
+          remove.className = 'remove';
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            item.selected = false;
+            updateAllOptionState(data); // Update "All" option state
+            updateTokens();
+            updateResults();
+            
+            // Update all checkboxes to reflect new state
+            const itemsToRender = getItemsWithAll(data);
+            const allCheckboxes = options.querySelectorAll('input[type="checkbox"]');
+            itemsToRender.forEach((itm, idx) => {
+              allCheckboxes[idx].checked = itm.selected;
+            });
+          });
+
+          token.appendChild(remove);
+          tokens.appendChild(token);
+        });
+      }
+
+      fieldset.appendChild(legend);
+      fieldset.appendChild(tokens);
+      fieldset.appendChild(options);
+
+      updateTokens();
+      return fieldset;
+    }
+
+    // Render dropdown (supports both single and multi-select)
+    function renderDropdown(data) {
+      const container = document.createElement('div');
+      container.className = 'dropdown';
+
+      const selectedValue = document.createElement('div');
+      selectedValue.className = 'selected-value';
+
+      const valueText = document.createElement('span');
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '▼';
+
+      selectedValue.appendChild(valueText);
+      selectedValue.appendChild(arrow);
+
+      const options = document.createElement('div');
+      options.className = 'options';
+
+      const itemsToRender = getItemsWithAll(data);
+      itemsToRender.forEach((item, index) => {
+        const opt = document.createElement('div');
+        opt.className = 'opt';
+
+        // Add checkbox for multi-select mode
+        if (data.mode === 'multi') {
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = item.selected;
+          checkbox.style.marginRight = '0.5rem';
+          opt.appendChild(checkbox);
+        }
+
+        const displaySpan = document.createElement('span');
+        if (item.flag) {
+          const flag = document.createElement('span');
+          flag.className = 'flag';
+          flag.textContent = item.flag;
+          displaySpan.appendChild(flag);
+        }
+        if (item.svg) {
+          const svgWrapper = document.createElement('span');
+          svgWrapper.className = 'svg-icon';
+          svgWrapper.innerHTML = item.svg;
+          svgWrapper.style.marginRight = '0.5rem';
+          svgWrapper.style.display = 'inline-flex';
+          svgWrapper.style.alignItems = 'center';
+          displaySpan.appendChild(svgWrapper);
+        }
+        
+        // Style "All" option differently
+        if (item.isAllOption) {
+          displaySpan.style.fontWeight = '600';
+          displaySpan.style.color = 'var(--accent)';
+        }
+        
+        displaySpan.appendChild(document.createTextNode(item.display));
+
+        const count = document.createElement('span');
+        count.className = 'count';
+        count.textContent = item.count.toLocaleString();
+
+        opt.appendChild(displaySpan);
+        opt.appendChild(count);
+
+        opt.addEventListener('click', (e) => {
+          if (data.mode === 'single') {
+            // Single-select: clear others and select this one
+            data.items.forEach(i => i.selected = false);
+            if (!item.isAllOption) {
+              item.selected = true;
+            }
+            container.classList.remove('open');
+          } else {
+            // Multi-select: toggle this item
+            if (item.isAllOption) {
+              handleAllOptionClick(data, item);
+            } else {
+              item.selected = !item.selected;
+              updateAllOptionState(data);
+            }
+            
+            // Update all checkboxes
+            const allCheckboxes = options.querySelectorAll('input[type="checkbox"]');
+            itemsToRender.forEach((itm, idx) => {
+              allCheckboxes[idx].checked = itm.selected;
+            });
+            // Keep dropdown open for multi-select
+          }
+          updateDisplay();
+          updateResults();
+        });
+
+        options.appendChild(opt);
+      });
+
+      selectedValue.addEventListener('click', () => {
+        container.classList.toggle('open');
+        // Close other dropdowns
+        document.querySelectorAll('.dropdown.open').forEach(dropdown => {
+          if (dropdown !== container) dropdown.classList.remove('open');
+        });
+      });
+
+      function updateDisplay() {
+        // Update "All" option state first
+        updateAllOptionState(data);
+        
+        const itemsToRender = getItemsWithAll(data);
+        const selected = data.items.filter(item => item.selected);
+        const allOption = data.mode === 'multi' && data.hasAll ? itemsToRender[0] : null;
+        
+        if (selected.length === 0) {
+          valueText.textContent = `Select ${data.display}...`;
+        } else if (data.mode === 'single') {
+          // Single-select: show the selected item
+          const item = selected[0];
+          valueText.innerHTML = '';
+          if (item.flag) {
+            const flag = document.createElement('span');
+            flag.className = 'flag';
+            flag.textContent = item.flag;
+            valueText.appendChild(flag);
+          }
+          if (item.svg) {
+            const svgWrapper = document.createElement('span');
+            svgWrapper.innerHTML = item.svg;
+            svgWrapper.style.marginRight = '0.5rem';
+            svgWrapper.style.display = 'inline-flex';
+            svgWrapper.style.alignItems = 'center';
+            const svg = svgWrapper.querySelector('svg');
+            if (svg) {
+              svg.setAttribute('width', '14');
+              svg.setAttribute('height', '14');
+            }
+            valueText.appendChild(svgWrapper);
+          }
+          valueText.appendChild(document.createTextNode(item.display));
+        } else {
+          // Multi-select: show "All" if all selected, otherwise count
+          if (allOption && allOption.selected) {
+            valueText.textContent = `All ${data.display}`;
+          } else if (selected.length === 1) {
+            const item = selected[0];
+            valueText.innerHTML = '';
+            if (item.flag) {
+              const flag = document.createElement('span');
+              flag.className = 'flag';
+              flag.textContent = item.flag;
+              valueText.appendChild(flag);
+            }
+            if (item.svg) {
+              const svgWrapper = document.createElement('span');
+              svgWrapper.innerHTML = item.svg;
+              svgWrapper.style.marginRight = '0.5rem';
+              svgWrapper.style.display = 'inline-flex';
+              svgWrapper.style.alignItems = 'center';
+              const svg = svgWrapper.querySelector('svg');
+              if (svg) {
+                svg.setAttribute('width', '14');
+                svg.setAttribute('height', '14');
+              }
+              valueText.appendChild(svgWrapper);
+            }
+            valueText.appendChild(document.createTextNode(item.display));
+          } else {
+            valueText.textContent = `${selected.length} selected`;
+          }
+        }
+        
+        // Update option styling
+        options.querySelectorAll('.opt').forEach((opt, index) => {
+          const item = itemsToRender[index];
+          opt.classList.toggle('selected', item.selected);
+        });
+      }
+
+      container.appendChild(selectedValue);
+      container.appendChild(options);
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+          container.classList.remove('open');
+        }
+      });
+
+      updateDisplay();
+      return container;
+    }
+
+    // Update results display
+    function updateResults() {
+      const output = document.getElementById('results-output');
+      const selections = {};
+
+      selectData.forEach(group => {
+        const selected = group.items.filter(item => item.selected);
+        if (selected.length > 0) {
+          selections[group.display] = selected.map(item => ({
+            display: item.display,
+            value: item.value,
+            ...(item.flag && { flag: item.flag })
+          }));
+        }
+      });
+
+      if (Object.keys(selections).length === 0) {
+        output.innerHTML = '<span class="empty-state">No selections made</span>';
+      } else {
+        let html = '';
+        Object.entries(selections).forEach(([groupName, items]) => {
+          html += `<strong>${groupName}:</strong><br>`;
+          items.forEach(item => {
+            html += `&nbsp;&nbsp;${item.flag || ''}${item.display}<br>`;
+          });
+          html += '<br>';
+        });
+        output.innerHTML = html;
+      }
+    }
+
+    // Initialize the demo
+    function init() {
+      const facetsContainer = document.getElementById('facets-container');
+      const dropdownsContainer = document.getElementById('dropdowns-container');
+
+      selectData.forEach(group => {
+        if (group.presentation === 'facet') {
+          facetsContainer.appendChild(renderFacet(group));
+        } else if (group.presentation === 'dropdown') {
+          const wrapper = document.createElement('div');
+          wrapper.style.marginBottom = '1rem';
+          
+          const label = document.createElement('label');
+          label.textContent = `${group.display} (${group.mode}-select)`;
+          label.style.display = 'block';
+          label.style.marginBottom = '0.5rem';
+          label.style.fontWeight = '500';
+          
+          wrapper.appendChild(label);
+          wrapper.appendChild(renderDropdown(group));
+          dropdownsContainer.appendChild(wrapper);
+        }
+      });
+
+      updateResults();
+    }
+
+    init();
+  </script>
+</body>
+</html>
