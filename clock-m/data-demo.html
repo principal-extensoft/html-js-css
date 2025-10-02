@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Clock - Data Provider Demo</title>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/theme-glassy.css">
+    
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .demo-section {
+            margin-bottom: 3rem;
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .demo-button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .demo-button:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .demo-button.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .demo-info {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .clock-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+        
+        .clock-demo {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .clock-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>Health Clock - Data Provider Demonstration</h1>
+        
+        <div class="demo-section">
+            <h2>Mock Data Scenarios</h2>
+            <div class="demo-controls">
+                <button class="demo-button active" onclick="switchMockScenario('realistic')">Realistic</button>
+                <button class="demo-button" onclick="switchMockScenario('incident')">Incident</button>
+                <button class="demo-button" onclick="switchMockScenario('maintenance')">Maintenance</button>
+                <button class="demo-button" onclick="switchMockScenario('outage')">Outage</button>
+                <button class="demo-button" onclick="switchMockScenario('custom')">Custom Function</button>
+            </div>
+            
+            <div class="demo-info">
+                <strong>Current Scenario:</strong> <span id="current-scenario">Realistic</span><br>
+                <strong>Data Provider:</strong> <span id="current-provider">Mock Provider</span><br>
+                <strong>Last Updated:</strong> <span id="last-updated">Loading...</span>
+            </div>
+            
+            <div class="clock-demo">
+                <div class="clock-title">Health Clock with Mock Data</div>
+                <div id="demo-clock"></div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>API Integration Example</h2>
+            <div class="demo-controls">
+                <button class="demo-button" onclick="simulateAPICall()">Simulate API Call</button>
+                <button class="demo-button" onclick="simulateAPIError()">Simulate API Error</button>
+                <button class="demo-button" onclick="testCustomDataFormat()">Test Custom Data Format</button>
+            </div>
+            
+            <div class="demo-info">
+                <div id="api-status">Ready for API simulation</div>
+            </div>
+            
+            <div class="clock-demo">
+                <div class="clock-title">Health Clock with API Data</div>
+                <div id="api-clock"></div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Real-time Data Updates</h2>
+            <div class="demo-controls">
+                <button class="demo-button" onclick="startRandomUpdates()">Start Random Updates</button>
+                <button class="demo-button" onclick="stopRandomUpdates()">Stop Updates</button>
+                <button class="demo-button" onclick="injectIncident()">Inject Incident</button>
+                <button class="demo-button" onclick="resolveIncident()">Resolve Incident</button>
+            </div>
+            
+            <div class="demo-info">
+                <div id="realtime-status">Updates stopped</div>
+            </div>
+            
+            <div class="clock-demo">
+                <div class="clock-title">Health Clock with Real-time Updates</div>
+                <div id="realtime-clock"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import HealthClock from './js/health-clock.js';
+        
+        let demoClock, apiClock, realtimeClock;
+        let updateInterval;
+        
+        // Custom mock data function
+        function customMockData() {
+            return Array.from({ length: 24 }, (_, hour) => ({
+                hour,
+                status: Math.random() > 0.8 ? 'degraded' : 'healthy',
+                response: `${Math.floor(Math.random() * 200 + 100)}ms`,
+                memory: `${(Math.random() * 2 + 2).toFixed(1)}GB`,
+                cpu: `${Math.floor(Math.random() * 50 + 10)}%`,
+                incidents: Math.random() > 0.9 ? Math.floor(Math.random() * 3) : 0
+            }));
+        }
+        
+        // Initialize demo clocks
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mock data demo clock
+            demoClock = new HealthClock('demo-clock', {
+                dataProvider: 'mock',
+                mockProvider: 'realistic',
+                dataRefreshInterval: 10000, // 10 seconds for demo
+                onDataUpdate: (data) => {
+                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                },
+                onHourClick: (hour, data) => {
+                    console.log('Demo clock hour clicked:', hour, data);
+                }
+            });
+            
+            // API simulation clock
+            apiClock = new HealthClock('api-clock', {
+                dataProvider: async () => {
+                    // Simulate API call
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Return data in different format to test transformation
+                    return {
+                        hourlyData: Array.from({ length: 24 }, (_, hour) => ({
+                            hour,
+                            health: Math.random() > 0.7 ? 'warning' : 'ok',
+                            responseTime: `${Math.floor(Math.random() * 300 + 50)}ms`,
+                            memoryUsage: `${(Math.random() * 3 + 1).toFixed(1)}GB`,
+                            cpuUsage: `${Math.floor(Math.random() * 80 + 5)}%`,
+                            errors: Math.random() > 0.85 ? Math.floor(Math.random() * 2) : 0
+                        }))
+                    };
+                },
+                onDataUpdate: (data) => {
+                    document.getElementById('api-status').textContent = 
+                        `API data loaded successfully at ${new Date().toLocaleTimeString()}`;
+                },
+                onDataError: (error) => {
+                    document.getElementById('api-status').textContent = 
+                        `API Error: ${error.message}`;
+                }
+            });
+            
+            // Real-time updates clock
+            realtimeClock = new HealthClock('realtime-clock', {
+                dataProvider: 'mock',
+                mockProvider: 'realistic',
+                dataRefreshInterval: 0, // We'll handle updates manually
+                onDataUpdate: (data) => {
+                    document.getElementById('realtime-status').textContent = 
+                        `Data updated at ${new Date().toLocaleTimeString()}`;
+                }
+            });
+        });
+        
+        // Global functions for demo controls
+        window.switchMockScenario = (scenario) => {
+            // Update button states
+            document.querySelectorAll('.demo-controls .demo-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update clock with new scenario
+            const provider = scenario === 'custom' ? customMockData : scenario;
+            demoClock.updateConfig({
+                mockProvider: provider
+            });
+            demoClock.refreshData();
+            
+            document.getElementById('current-scenario').textContent = 
+                scenario.charAt(0).toUpperCase() + scenario.slice(1);
+        };
+        
+        window.simulateAPICall = async () => {
+            document.getElementById('api-status').textContent = 'Simulating API call...';
+            
+            // Update API clock with fresh data
+            await apiClock.refreshData();
+        };
+        
+        window.simulateAPIError = () => {
+            apiClock.updateConfig({
+                dataProvider: async () => {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    throw new Error('Network timeout - API server unreachable');
+                }
+            });
+            apiClock.refreshData();
+        };
+        
+        window.testCustomDataFormat = () => {
+            apiClock.updateConfig({
+                dataProvider: async () => {
+                    // Test different data format
+                    return {
+                        metrics: Object.fromEntries(
+                            Array.from({ length: 24 }, (_, hour) => [
+                                hour,
+                                {
+                                    status: Math.random() > 0.6 ? 'critical' : 'good',
+                                    latency: Math.floor(Math.random() * 400 + 100),
+                                    ram: (Math.random() * 4 + 1).toFixed(1),
+                                    processor: Math.floor(Math.random() * 90 + 5),
+                                    incidents: Math.random() > 0.8 ? Math.floor(Math.random() * 4) : 0
+                                }
+                            ])
+                        )
+                    };
+                }
+            });
+            apiClock.refreshData();
+            
+            document.getElementById('api-status').textContent = 
+                'Testing custom data format with metrics object structure';
+        };
+        
+        window.startRandomUpdates = () => {
+            if (updateInterval) clearInterval(updateInterval);
+            
+            updateInterval = setInterval(() => {
+                realtimeClock.refreshData();
+            }, 3000);
+            
+            document.getElementById('realtime-status').textContent = 'Random updates started (every 3 seconds)';
+        };
+        
+        window.stopRandomUpdates = () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            document.getElementById('realtime-status').textContent = 'Updates stopped';
+        };
+        
+        window.injectIncident = () => {
+            realtimeClock.updateConfig({
+                mockProvider: 'incident'
+            });
+            realtimeClock.refreshData();
+            
+            document.getElementById('realtime-status').textContent = 
+                'Incident injected - hours 14-16 affected';
+        };
+        
+        window.resolveIncident = () => {
+            realtimeClock.updateConfig({
+                mockProvider: 'realistic'
+            });
+            realtimeClock.refreshData();
+            
+            document.getElementById('realtime-status').textContent = 
+                'Incident resolved - back to normal operations';
+        };
+    </script>
+</body>
+</html>
