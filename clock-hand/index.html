@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard</title>
+    <!-- Chart.js CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Base styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <!-- Theme styles - Change the theme by swapping the CSS file -->
+    <!-- <link rel="stylesheet" href="styles/theme-wallstreet.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-federal.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-elegance.css"> -->
+     <link rel="stylesheet" href="styles/theme-glassy.css">
+    <!-- <link rel="stylesheet" href="styles/theme-mainframe.css">--> 
+    <!-- <link rel="stylesheet" href="styles/theme-raiders.css"> -->
+   <!-- <link rel="stylesheet" href="styles/theme-patriotic.css">  -->
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">System Health Dashboard</h1>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="subscriber-select">Subscriber:</label>
+                    <select id="subscriber-select">
+                        <option>Application A</option>
+                        <option>Application B</option>
+                        <option>Payment Service</option>
+                        <option>User Service</option>
+                        <option>Database Cluster</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <button id="prev-date" class="nav-btn">‹</button>
+                    <span id="date-label" class="date-label"></span>
+                    <button id="next-date" class="nav-btn">›</button>
+                    <button id="today-btn">Today</button>
+                </div>
+            </div>
+            
+            <div class="view-tabs">
+                <button class="tab" data-target="day-view">Daily</button>
+                <button class="tab" data-target="week-view">Weekly</button>
+                <button class="tab" data-target="month-view">Monthly</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <!-- Daily View -->
+        <div id="day-view" class="view">
+            <div class="dashboard-grid">
+                <!-- Overall Health Status -->
+                <div class="card">
+                    <h3>Overall Health Status</h3>
+                    <div class="status-grid">
+                        <div class="status-item status-healthy" data-tooltip="8 applications running optimally&#10;All systems operational&#10;Average uptime: 99.8%">
+                            <span class="status-count">8</span>
+                            <span class="status-label">Healthy</span>
+                        </div>
+                        <div class="status-item status-degraded" data-tooltip="2 applications with performance issues&#10;Response times elevated&#10;Memory usage above 80%">
+                            <span class="status-count">2</span>
+                            <span class="status-label">Degraded</span>
+                        </div>
+                        <div class="status-item status-unhealthy" data-tooltip="1 application offline&#10;Database connection failed&#10;Last seen: 14 minutes ago">
+                            <span class="status-count">1</span>
+                            <span class="status-label">Unhealthy</span>
+                        </div>
+                    </div>
+                    <div class="metric-item" data-tooltip="Based on successful health checks vs total checks&#10;Target: 99.5%&#10;Current month: 98.9%">
+                        <span class="metric-label">Overall Uptime</span>
+                        <span class="metric-value">98.7%</span>
+                    </div>
+                </div>
+
+                <!-- Resource Utilization -->
+                <div class="card server-card">
+                    <div class="card-header">
+                        <h3>Resource Utilization</h3>
+                        <div class="server-selector">
+                            <div class="server-option active" data-server="web-01" data-tooltip="WEB-01 (192.168.1.101)&#10;Windows Server 2022&#10;Last update: 3 min ago">
+                                <span class="server-name">WEB-01</span>
+                                <span class="server-status status-healthy"></span>
+                            </div>
+                            <div class="server-option" data-server="app-02" data-tooltip="APP-02 (192.168.1.102)&#10;Windows Server 2019&#10;Last update: 2 min ago">
+                                <span class="server-name">APP-02</span>
+                                <span class="server-status status-degraded"></span>
+                            </div>
+                            <div class="server-option" data-server="db-03" data-tooltip="DB-03 (192.168.1.103)&#10;Windows Server 2022&#10;Last update: 1 min ago">
+                                <span class="server-name">DB-03</span>
+                                <span class="server-status status-healthy"></span>
+                            </div>
+                            <div class="server-option" data-server="file-04" data-tooltip="FILE-04 (192.168.1.104)&#10;Windows Server 2019&#10;Last update: 8 min ago">
+                                <span class="server-name">FILE-04</span>
+                                <span class="server-status status-healthy"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="server-info">
+                        <div class="server-details">
+                            <span class="server-ip">192.168.1.101</span>
+                            <span class="server-os">Win Server 2022</span>
+                            <span class="last-update">3m ago</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-section">
+                        <div class="system-resources">
+                            <div class="progress-item compact" data-tooltip="CPU: 68% average load&#10;Peak today: 85% at 2:15 PM&#10;Cores: 8 available&#10;Top process: w3wp.exe (24%)">
+                                <div class="progress-header">
+                                    <span class="progress-label">
+                                        <span class="resource-icon">🔥</span>
+                                        CPU
+                                    </span>
+                                    <span class="progress-value">68% <span class="progress-details">5.4/8</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-cpu" style="width: 68%"></div>
+                                    <div class="progress-threshold" style="left: 80%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-item compact" data-tooltip="RAM: 12.8GB used of 16GB total&#10;Peak today: 13.2GB at 2:15 PM&#10;Available: 3.2GB&#10;Page file: 2.1GB used">
+                                <div class="progress-header">
+                                    <span class="progress-label">
+                                        <span class="resource-icon">💾</span>
+                                        RAM
+                                    </span>
+                                    <span class="progress-value">80% <span class="progress-details">12.8/16GB</span></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-ram" style="width: 80%"></div>
+                                    <div class="progress-threshold" style="left: 85%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="drives-section">
+                            <h4 class="section-title">Drives</h4>
+                            <div class="drives-compact">
+                                <div class="drive-compact" data-tooltip="C:\ System Drive&#10;450GB used of 1TB total&#10;Free space: 550GB&#10;Type: NVMe SSD">
+                                    <div class="drive-info">
+                                        <span class="drive-label">💿 C:\</span>
+                                        <span class="drive-value">45%</span>
+                                    </div>
+                                    <div class="drive-bar-mini">
+                                        <div class="drive-fill progress-disk" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="drive-compact" data-tooltip="D:\ Data Drive&#10;1.2TB used of 2TB total&#10;Free space: 800GB&#10;Type: SATA HDD">
+                                    <div class="drive-info">
+                                        <span class="drive-label">💽 D:\</span>
+                                        <span class="drive-value">60%</span>
+                                    </div>
+                                    <div class="drive-bar-mini">
+                                        <div class="drive-fill progress-disk" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="drive-compact" data-tooltip="E:\ Backup Drive&#10;890GB used of 1TB total&#10;Free space: 110GB&#10;Type: SATA HDD">
+                                    <div class="drive-info">
+                                        <span class="drive-label">🔄 E:\</span>
+                                        <span class="drive-value">89%</span>
+                                    </div>
+                                    <div class="drive-bar-mini">
+                                        <div class="drive-fill progress-warning" style="width: 89%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="drive-compact" data-tooltip="\\NAS01\Share Network Drive&#10;2.1TB used of 5TB total&#10;Free space: 2.9TB&#10;Type: Network Storage">
+                                    <div class="drive-info">
+                                        <span class="drive-label">🌐 NAS</span>
+                                        <span class="drive-value">42%</span>
+                                    </div>
+                                    <div class="drive-bar-mini">
+                                        <div class="drive-fill progress-network" style="width: 42%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 24-Hour Health Clock -->
+                <div class="card">
+                    <h3>24-Hour Health Clock</h3>
+                    <div class="clock-container" id="clock-container">
+                        <div class="health-clock" id="health-clock">
+                            <!-- Clock face will be generated by JavaScript -->
+                            <!-- Analog clock hands (glassy 2005 style) -->
+                            <div class="clock-hand hour-hand" id="hour-hand">
+                                <div class="glass-rod">
+                                    <div class="glass-tip"></div>
+                                    <div class="glass-highlight"></div>
+                                    <div class="glass-inner-glow"></div>
+                                </div>
+                                <div class="glass-base"></div>
+                            </div>
+                            <div class="clock-hand minute-hand" id="minute-hand">
+                                <div class="glass-rod">
+                                    <div class="glass-tip"></div>
+                                    <div class="glass-highlight"></div>
+                                    <div class="glass-inner-glow"></div>
+                                </div>
+                                <div class="glass-base"></div>
+                            </div>
+                            <div class="clock-center">
+                                <div class="current-time" id="current-time">14:30</div>
+                                <div class="clock-dot"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="clock-details" id="clock-details">
+                            <div class="detail-content" id="detail-content">
+                                <div class="detail-placeholder">
+                                    <span class="clock-icon">🕒</span>
+                                    <p>Hover over any hour to see health details</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="clock-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--success);"></div>
+                            <span>Healthy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--warning);"></div>
+                            <span>Degraded</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--error);"></div>
+                            <span>Unhealthy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color current-hour"></div>
+                            <span>Current Hour</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="card">
+                    <h3>Performance Metrics</h3>
+                    <div class="metric-item" data-tooltip="Current: 247ms&#10;Yesterday: 220ms&#10;7-day avg: 195ms&#10;Target: <200ms">
+                        <span class="metric-label">Avg Response Time</span>
+                        <span class="metric-value">247ms <span class="metric-trend trend-up">↑ 12%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Last 24h: 3 failures&#10;Last week: 5 failures&#10;Most common: timeout (2/3)">
+                        <span class="metric-label">Failed Health Checks</span>
+                        <span class="metric-value">3 <span class="metric-trend trend-down">↓ 40%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Mean Time To Recovery&#10;Target: <5 minutes&#10;Best: 1.2 min&#10;Worst: 8.4 min">
+                        <span class="metric-label">MTTR</span>
+                        <span class="metric-value">4.2 min <span class="metric-trend trend-down">↓ 15%</span></span>
+                    </div>
+                    <div class="metric-item" data-tooltip="Today's incidents: 2&#10;This week: 7&#10;Avg resolution: 3.5 min">
+                        <span class="metric-label">Incidents Today</span>
+                        <span class="metric-value">2</span>
+                    </div>
+                </div>
+
+                <!-- Real-time Trend Chart -->
+                <div class="card">
+                    <h3>Real-time System Health</h3>
+                    <div class="chart-container">
+                        <canvas id="trend-line"></canvas>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="card">
+                    <h3>Active Alerts</h3>
+                    <div class="alerts">
+                        <div class="alert-item" data-tooltip="Server: app-server-03&#10;Threshold: 85%&#10;Current: 87%&#10;Duration: 12 minutes">
+                            <div class="alert-icon">!</div>
+                            <div class="alert-content">
+                                <h4>High Memory Usage</h4>
+                                <p>App-Server-03 RAM usage exceeded 85% threshold</p>
+                            </div>
+                        </div>
+                        <div class="alert-item" data-tooltip="Service: payment-service&#10;Connection pool: 89/100&#10;Timeouts: 3 in last 5 min&#10;Status: Investigating">
+                            <div class="alert-icon">!</div>
+                            <div class="alert-content">
+                                <h4>Database Connection Issues</h4>
+                                <p>Payment-Service experiencing intermittent DB timeouts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly View -->
+        <div id="week-view" class="view">
+            <div class="dashboard-grid wide">
+                <div class="card">
+                    <h3>Weekly Health Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="weekly-health"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Weekly Metrics</h3>
+                    <div class="metric-item">
+                        <span class="metric-label">Avg Response Time</span>
+                        <span class="metric-value">215ms</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Downtime</span>
+                        <span class="metric-value">23 min</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Incidents</span>
+                        <span class="metric-value">7</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">SLA Uptime</span>
+                        <span class="metric-value">99.2%</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Peak Usage Patterns</h3>
+                    <div class="chart-container">
+                        <canvas id="peak-usage"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Incident Correlation</h3>
+                    <div class="chart-container">
+                        <canvas id="incident-correlation"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly View -->
+        <div id="month-view" class="view">
+            <div class="dashboard-grid wide">
+                <div class="card">
+                    <h3>Monthly Health Heatmap</h3>
+                    <div class="chart-container">
+                        <canvas id="month-heatmap"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Monthly Summary</h3>
+                    <div class="metric-item">
+                        <span class="metric-label">SLA Uptime</span>
+                        <span class="metric-value">99.1%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Total Incidents</span>
+                        <span class="metric-value">28</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Avg MTTR</span>
+                        <span class="metric-value">4.8 min</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Capacity Forecast</span>
+                        <span class="metric-value">67% by EOY</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tab');
+            const views = document.querySelectorAll('.view');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    views.forEach(v => v.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.target).classList.add('active');
+                });
+            });
+            
+            // Activate default view (daily)
+            document.querySelector('.tab[data-target="day-view"]').click();
+
+            // Date navigation
+            const dateLabel = document.getElementById('date-label');
+            let currentDate = new Date();
+            
+            function updateDateLabel(date) {
+                dateLabel.textContent = date.toDateString();
+            }
+            
+            updateDateLabel(currentDate);
+
+            document.getElementById('today-btn').addEventListener('click', () => {
+                currentDate = new Date();
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('prev-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 1);
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('next-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 1);
+                updateDateLabel(currentDate);
+            });
+
+            // Generate 24-hour health clock
+            function generateHealthClock() {
+                const clockContainer = document.getElementById('health-clock');
+                const detailContent = document.getElementById('detail-content');
+                
+                let pinnedHour = null;
+                
+                // Configuration for trailing comet effect
+                const COMET_TAIL_LENGTH = 9; // Number of previous hours to illuminate (configurable)
+                const COMET_FALLOFF_RATE = 0.7; // Brightness falloff multiplier (0.1-1.0, configurable)
+                
+                // Configuration for brightness levels
+                const BASE_BRIGHTNESS = 0.5; // Base brightness for all hours in current period (0.1-1.0)
+                const OPPOSITE_PERIOD_BRIGHTNESS = 0.35; // Brightness for hours in opposite period (AM when PM, etc)
+                const COMET_BRIGHTNESS_BOOST = 0.6; // Additional brightness for comet trail hours (added to base)
+                const CURRENT_HOUR_BRIGHTNESS = 1.0; // Maximum brightness for current hour
+                const FUTURE_HOUR_BRIGHTNESS = 0.25; // Brightness for future hours
+                
+                // Configuration for future hours interactivity
+                const DISABLE_FUTURE_HOURS = true; // Set to false to allow interaction with future hours
+                
+                // Sample health data for 24 hours
+                const healthData = [
+                    { hour: 0, status: 'healthy', response: '145ms', memory: '3.2GB', cpu: '15%', incidents: 0 },
+                    { hour: 1, status: 'healthy', response: '132ms', memory: '3.1GB', cpu: '12%', incidents: 0 },
+                    { hour: 2, status: 'healthy', response: '128ms', memory: '3.0GB', cpu: '10%', incidents: 0 },
+                    { hour: 3, status: 'healthy', response: '134ms', memory: '3.1GB', cpu: '11%', incidents: 0 },
+                    { hour: 4, status: 'healthy', response: '142ms', memory: '3.3GB', cpu: '14%', incidents: 0 },
+                    { hour: 5, status: 'healthy', response: '158ms', memory: '3.5GB', cpu: '18%', incidents: 0 },
+                    { hour: 6, status: 'healthy', response: '165ms', memory: '3.8GB', cpu: '22%', incidents: 0 },
+                    { hour: 7, status: 'degraded', response: '245ms', memory: '4.2GB', cpu: '35%', incidents: 0 },
+                    { hour: 8, status: 'degraded', response: '289ms', memory: '4.8GB', cpu: '45%', incidents: 1 },
+                    { hour: 9, status: 'degraded', response: '312ms', memory: '5.1GB', cpu: '52%', incidents: 1 },
+                    { hour: 10, status: 'healthy', response: '198ms', memory: '4.6GB', cpu: '38%', incidents: 0 },
+                    { hour: 11, status: 'healthy', response: '176ms', memory: '4.3GB', cpu: '32%', incidents: 0 },
+                    { hour: 12, status: 'healthy', response: '189ms', memory: '4.5GB', cpu: '36%', incidents: 0 },
+                    { hour: 13, status: 'degraded', response: '267ms', memory: '5.2GB', cpu: '48%', incidents: 1 },
+                    { hour: 14, status: 'degraded', response: '298ms', memory: '5.6GB', cpu: '55%', incidents: 2 },
+                    { hour: 15, status: 'unhealthy', response: 'TIMEOUT', memory: '6.1GB', cpu: '78%', incidents: 3 },
+                    { hour: 16, status: 'degraded', response: '345ms', memory: '5.8GB', cpu: '62%', incidents: 1 },
+                    { hour: 17, status: 'healthy', response: '234ms', memory: '5.1GB', cpu: '42%', incidents: 0 },
+                    { hour: 18, status: 'healthy', response: '198ms', memory: '4.7GB', cpu: '38%', incidents: 0 },
+                    { hour: 19, status: 'healthy', response: '167ms', memory: '4.2GB', cpu: '28%', incidents: 0 },
+                    { hour: 20, status: 'healthy', response: '154ms', memory: '3.9GB', cpu: '24%', incidents: 0 },
+                    { hour: 21, status: 'healthy', response: '148ms', memory: '3.6GB', cpu: '19%', incidents: 0 },
+                    { hour: 22, status: 'healthy', response: '141ms', memory: '3.4GB', cpu: '16%', incidents: 0 },
+                    { hour: 23, status: 'healthy', response: '138ms', memory: '3.2GB', cpu: '13%', incidents: 0 }
+                ];
+                
+                // Current hour for highlighting and determining active period
+                const currentHour = new Date().getHours();
+                const isAfternoon = currentHour >= 12;
+                
+                // Create hour segments for dual ring
+                for (let hour = 0; hour < 24; hour++) {
+                    const segment = document.createElement('div');
+                    
+                    // Determine if this is outer ring (1-12) or inner ring (13-23)
+                    const isOuterRing = hour >= 1 && hour <= 12;
+                    const isInnerRing = hour >= 13 && hour <= 23;
+                    const isMidnight = hour === 0;
+                    
+                    // Set up classes
+                    segment.className = `hour-segment status-${healthData[hour].status}`;
+                    
+                    if (isOuterRing || isMidnight) {
+                        segment.classList.add('outer-ring');
+                    } else if (isInnerRing) {
+                        segment.classList.add('inner-ring');
+                    }
+                    
+                    // Apply comet trailing effect
+                    const cometOpacity = calculateCometOpacity(hour, currentHour, isAfternoon, isOuterRing, isInnerRing, isMidnight);
+                    
+                    // Determine if this hour is in the future
+                    const isFutureHourInitial = isHourInFuture(hour, currentHour, isAfternoon, isOuterRing, isInnerRing, isMidnight);
+                    
+                    // Apply appropriate opacity (future hours get special treatment)
+                    if (DISABLE_FUTURE_HOURS && isFutureHourInitial) {
+                        segment.style.opacity = FUTURE_HOUR_BRIGHTNESS;
+                    } else {
+                        segment.style.opacity = cometOpacity;
+                    }
+                    
+                    // Add comet-trail class for hours in the trail (above base brightness)
+                    if (!isFutureHourInitial && cometOpacity > BASE_BRIGHTNESS) {
+                        segment.classList.add('comet-trail');
+                    }
+                    
+                    // Display military time numbers
+                    segment.textContent = hour.toString().padStart(2, '0');
+                    segment.dataset.hour = hour;
+                    
+                    // Calculate position on clock face
+                    let radius, angle;
+                    
+                    if (isOuterRing || isMidnight) {
+                        // Outer ring: 1-12 positions (plus 00 at 12 o'clock)
+                        radius = 125;
+                        const displayHour = isMidnight ? 12 : hour;
+                        angle = (displayHour * 30 - 90) * (Math.PI / 180); // 30 degrees per hour
+                    } else {
+                        // Inner ring: 13-23 positions
+                        radius = 85;
+                        const adjustedHour = hour - 12; // Convert 13-23 to 1-11 positions
+                        angle = (adjustedHour * 30 - 90) * (Math.PI / 180);
+                    }
+                    
+                    const x = 140 + radius * Math.cos(angle); // 140 = half of 280px clock width
+                    const y = 140 + radius * Math.sin(angle);
+                    
+                    segment.style.left = (x - 12) + 'px'; // -12 to center the 24px wide segment
+                    segment.style.top = (y - 12) + 'px';  // -12 to center the 24px tall segment
+                    
+                    // Mark current hour
+                    if (hour === currentHour) {
+                        segment.classList.add('current');
+                    }
+                    
+                    // Determine if this hour is in the future
+                    const isFutureHour = isHourInFuture(hour, currentHour, isAfternoon, isOuterRing, isInnerRing, isMidnight);
+                    
+                    // Add event listeners only if not a future hour (or if future hours are enabled)
+                    if (!DISABLE_FUTURE_HOURS || !isFutureHourInitial) {
+                        segment.addEventListener('mouseenter', () => showHourDetails(hour));
+                        segment.addEventListener('mouseleave', () => {
+                            if (pinnedHour !== hour) hideHourDetails();
+                        });
+                        segment.addEventListener('click', () => pinHourDetails(hour));
+                        segment.classList.add('interactive');
+                    } else {
+                        // Mark future hours as non-interactive
+                        segment.classList.add('future-hour');
+                        segment.style.cursor = 'default';
+                    }
+                    
+                    clockContainer.appendChild(segment);
+                }
+                
+                // Update current time display and active periods
+                function updateCurrentTime() {
+                    const now = new Date();
+                    const timeString = now.toTimeString().substring(0, 5);
+                    document.getElementById('current-time').textContent = timeString;
+                    
+                    // Update analog clock hands (sword-style)
+                    updateClockHands(now);
+                    
+                    // Update active periods if hour has changed
+                    const newHour = now.getHours();
+                    const newIsAfternoon = newHour >= 12;
+                    
+                    if (newHour !== currentHour) {
+                        // Remove all comet-trail, current, and interactivity classes
+                        document.querySelectorAll('.hour-segment').forEach(seg => {
+                            seg.classList.remove('comet-trail', 'current', 'interactive', 'future-hour');
+                            // Remove existing event listeners by cloning the element
+                            const newSeg = seg.cloneNode(true);
+                            seg.parentNode.replaceChild(newSeg, seg);
+                        });
+                        
+                        // Recalculate comet effect and interactivity for all segments
+                        document.querySelectorAll('.hour-segment').forEach(seg => {
+                            const segmentHour = parseInt(seg.dataset.hour);
+                            const isOuterSegment = seg.classList.contains('outer-ring');
+                            const isInnerSegment = seg.classList.contains('inner-ring');
+                            const isMidnightSegment = segmentHour === 0;
+                            
+                            // Apply new comet opacity
+                            const cometOpacity = calculateCometOpacity(segmentHour, newHour, newIsAfternoon, isOuterSegment, isInnerSegment, isMidnightSegment);
+                            seg.style.opacity = cometOpacity;
+                            
+                            // Add comet-trail class for hours in the trail (above base brightness)
+                            if (cometOpacity > BASE_BRIGHTNESS) {
+                                seg.classList.add('comet-trail');
+                            }
+                            
+                            // Mark new current hour
+                            if (segmentHour === newHour) {
+                                seg.classList.add('current');
+                            }
+                            
+                            // Recalculate future hour status and add event listeners
+                            const isFutureHourUpdate = isHourInFuture(segmentHour, newHour, newIsAfternoon, isOuterSegment, isInnerSegment, isMidnightSegment);
+                            
+                            if (!DISABLE_FUTURE_HOURS || !isFutureHourUpdate) {
+                                seg.addEventListener('mouseenter', () => showHourDetails(segmentHour));
+                                seg.addEventListener('mouseleave', () => {
+                                    if (pinnedHour !== segmentHour) hideHourDetails();
+                                });
+                                seg.addEventListener('click', () => pinHourDetails(segmentHour));
+                                seg.classList.add('interactive');
+                                seg.style.cursor = 'pointer';
+                            } else {
+                                seg.classList.add('future-hour');
+                                seg.style.cursor = 'default';
+                                // Override opacity for future hours
+                                seg.style.opacity = FUTURE_HOUR_BRIGHTNESS;
+                            }
+                        });
+                    }
+                }
+                
+                // Function to determine if an hour is in the future (only future hours are non-interactive)
+                function isHourInFuture(hour, currentHour, isAfternoon, isOuterRing, isInnerRing, isMidnight) {
+                    // Calculate absolute hour distance from current time
+                    const absoluteDistance = calculateAbsoluteHourDistance(hour, currentHour);
+                    
+                    // Only truly future hours (positive distance) are non-interactive
+                    return absoluteDistance > 0;
+                }
+                
+                // Helper function to calculate absolute hour distance (supports cross-period)
+                function calculateAbsoluteHourDistance(hour, currentHour) {
+                    // Simple distance calculation: negative = past, 0 = current, positive = future
+                    return hour - currentHour;
+                }
+                
+                // Function to calculate opacity for comet trailing effect (supports cross-period trails)
+                function calculateCometOpacity(hour, currentHour, isAfternoon, isOuterRing, isInnerRing, isMidnight) {
+                    // Calculate absolute distance from current hour (negative = past, positive = future)
+                    const absoluteDistance = calculateAbsoluteHourDistance(hour, currentHour);
+                    
+                    // Current hour gets maximum brightness
+                    if (absoluteDistance === 0) {
+                        return CURRENT_HOUR_BRIGHTNESS;
+                    }
+                    
+                    // Future hours get base brightness for their period
+                    if (absoluteDistance > 0) {
+                        const hourInCurrentPeriod = (isAfternoon && (isInnerRing)) || (!isAfternoon && (isOuterRing || isMidnight));
+                        return hourInCurrentPeriod ? BASE_BRIGHTNESS : OPPOSITE_PERIOD_BRIGHTNESS;
+                    }
+                    
+                    // Past hours: calculate comet trail effect
+                    const distanceBack = Math.abs(absoluteDistance); // Convert to positive distance
+                    
+                    if (distanceBack <= COMET_TAIL_LENGTH) {
+                        // Hour is within the comet tail
+                        const falloffFactor = Math.pow(COMET_FALLOFF_RATE, distanceBack);
+                        const cometBoost = COMET_BRIGHTNESS_BOOST * falloffFactor;
+                        
+                        // Determine base brightness for this hour's period
+                        const hourInCurrentPeriod = (isAfternoon && (isInnerRing)) || (!isAfternoon && (isOuterRing || isMidnight));
+                        const baseBrightness = hourInCurrentPeriod ? BASE_BRIGHTNESS : OPPOSITE_PERIOD_BRIGHTNESS;
+                        
+                        return Math.min(baseBrightness + cometBoost, CURRENT_HOUR_BRIGHTNESS);
+                    } else {
+                        // Hour is outside the comet tail - gets base brightness for its period
+                        const hourInCurrentPeriod = (isAfternoon && (isInnerRing)) || (!isAfternoon && (isOuterRing || isMidnight));
+                        return hourInCurrentPeriod ? BASE_BRIGHTNESS : OPPOSITE_PERIOD_BRIGHTNESS;
+                    }
+                }
+                
+                updateCurrentTime();
+                setInterval(updateCurrentTime, 1000);
+                
+                function showHourDetails(hour) {
+                    const data = healthData[hour];
+                    const timeString = `${hour.toString().padStart(2, '0')}:00`;
+                    const isPinned = pinnedHour === hour;
+                    const pinIcon = isPinned ? '📌' : '📍';
+                    const pinText = isPinned ? 'Unpin' : 'Pin';
+                    const pinClass = isPinned ? 'pinned' : '';
+                    
+                    detailContent.innerHTML = `
+                        <div class="hour-details">
+                            <div class="hour-header">
+                                <div class="hour-title">
+                                    <span class="hour-time">${timeString}</span>
+                                    <span class="hour-status ${data.status}">${data.status}</span>
+                                </div>
+                                <button class="pin-toggle-btn ${pinClass}" onclick="togglePin(${hour})" title="${pinText} this hour">
+                                    <span class="pin-icon">${pinIcon}</span>
+                                </button>
+                            </div>
+                            <div class="metrics-grid">
+                                <div class="metric-detail">
+                                    <span class="metric-label">Response</span>
+                                    <span class="metric-value">${data.response}</span>
+                                </div>
+                                <div class="metric-detail">
+                                    <span class="metric-label">Memory</span>
+                                    <span class="metric-value">${data.memory}</span>
+                                </div>
+                                <div class="metric-detail">
+                                    <span class="metric-label">CPU</span>
+                                    <span class="metric-value">${data.cpu}</span>
+                                </div>
+                                <div class="metric-detail">
+                                    <span class="metric-label">Issues</span>
+                                    <span class="metric-value">${data.incidents}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                function hideHourDetails() {
+                    if (pinnedHour === null) {
+                        detailContent.innerHTML = `
+                            <div class="detail-placeholder">
+                                <span class="clock-icon">🕒</span>
+                                <p>Hover over any hour to see details</p>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Make togglePin globally accessible for onclick handlers
+                window.togglePin = function(hour) {
+                    // Remove pinned visual class from all segments
+                    document.querySelectorAll('.hour-segment').forEach(seg => {
+                        seg.classList.remove('pinned-visual');
+                    });
+                    
+                    if (pinnedHour === hour) {
+                        // Unpin if clicking the same hour
+                        pinnedHour = null;
+                        hideHourDetails();
+                    } else {
+                        // Pin the new hour
+                        pinnedHour = hour;
+                        document.querySelector(`[data-hour="${hour}"]`).classList.add('pinned-visual');
+                        showHourDetails(hour); // Refresh the display with pinned state
+                    }
+                };
+                
+                function pinHourDetails(hour) {
+                    // Delegate to the new togglePin function
+                    window.togglePin(hour);
+                }
+            }
+            
+            // Function to update analog clock hands (sword-style)
+            function updateClockHands(time) {
+                const hours = time.getHours();
+                const minutes = time.getMinutes();
+                const seconds = time.getSeconds();
+                
+                // Calculate angles for hands
+                // Hour hand: 360 degrees / 12 hours = 30 degrees per hour
+                // Plus minute contribution: 30 degrees / 60 minutes = 0.5 degrees per minute
+                const hourAngle = (hours % 12) * 30 + (minutes * 0.5);
+                
+                // Minute hand: 360 degrees / 60 minutes = 6 degrees per minute
+                // Plus second contribution for smooth movement: 6 degrees / 60 seconds = 0.1 degrees per second
+                const minuteAngle = minutes * 6 + (seconds * 0.1);
+                
+                // Apply rotation to hands
+                const hourHand = document.getElementById('hour-hand');
+                const minuteHand = document.getElementById('minute-hand');
+                
+                if (hourHand) {
+                    hourHand.style.transform = `translate(-50%, -100%) rotate(${hourAngle}deg)`;
+                }
+                
+                if (minuteHand) {
+                    minuteHand.style.transform = `translate(-50%, -100%) rotate(${minuteAngle}deg)`;
+                }
+            }
+            
+            generateHealthClock();
+            
+            // Clock display configuration - flip this boolean to toggle between modes
+            const SHOW_ANALOG_HANDS = true; // Set to false to show digital time instead
+            
+            // Apply clock mode based on configuration
+            const clockContainer = document.getElementById('clock-container');
+            console.log('Clock container found:', clockContainer);
+            console.log('SHOW_ANALOG_HANDS:', SHOW_ANALOG_HANDS);
+            
+            if (SHOW_ANALOG_HANDS) {
+                clockContainer.classList.add('analog-mode');
+                clockContainer.classList.remove('digital-mode');
+                console.log('Applied analog-mode class');
+            } else {
+                clockContainer.classList.add('digital-mode');
+                clockContainer.classList.remove('analog-mode');
+                console.log('Applied digital-mode class');
+            }
+            
+            console.log('Final classes:', clockContainer.className);
+
+            // Initialize Charts
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    }
+                }
+            };
+
+            // Trend Line Chart
+            new Chart(document.getElementById('trend-line').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Response Time',
+                        data: Array.from({length: 24}, () => 150 + Math.random() * 200),
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Weekly Health Chart
+            new Chart(document.getElementById('weekly-health').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Uptime %',
+                        data: [99.2, 99.8, 98.1, 99.5, 99.9, 99.7, 99.3],
+                        backgroundColor: '#22c55e'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Peak Usage Chart
+            new Chart(document.getElementById('peak-usage').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Peak CPU %',
+                        data: [78, 82, 91, 76, 88, 45, 52],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Incident Correlation Chart
+            new Chart(document.getElementById('incident-correlation').getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'CPU vs Incidents',
+                        data: [
+                            {x: 65, y: 1}, {x: 78, y: 2}, {x: 82, y: 3},
+                            {x: 91, y: 5}, {x: 76, y: 1}, {x: 88, y: 4}
+                        ],
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'CPU Usage %' } },
+                        y: { title: { display: true, text: 'Incidents' } }
+                    }
+                }
+            });
+
+            // Monthly Heatmap Chart
+            new Chart(document.getElementById('month-heatmap').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+                    datasets: [{
+                        label: 'Daily Health Score',
+                        data: Array.from({length: 30}, () => 85 + Math.random() * 15),
+                        borderColor: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Tooltip functionality
+            const tooltip = document.getElementById('tooltip');
+            const tooltipElements = document.querySelectorAll('[data-tooltip]');
+
+            function showTooltip(element, event) {
+                const tooltipText = element.getAttribute('data-tooltip');
+                tooltip.innerHTML = tooltipText.replace(/&#10;/g, '<br>');
+                tooltip.classList.add('show');
+                
+                const rect = element.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+                tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+                
+                // Adjust if tooltip goes off screen
+                if (tooltip.offsetLeft < 10) {
+                    tooltip.style.left = '10px';
+                }
+                if (tooltip.offsetLeft + tooltip.offsetWidth > window.innerWidth - 10) {
+                    tooltip.style.left = window.innerWidth - tooltip.offsetWidth - 10 + 'px';
+                }
+            }
+
+            function hideTooltip() {
+                tooltip.classList.remove('show');
+            }
+
+            tooltipElements.forEach(element => {
+                element.addEventListener('mouseenter', (e) => showTooltip(element, e));
+                element.addEventListener('mouseleave', hideTooltip);
+            });
+
+            // Add event listeners for dynamically generated heatmap elements
+            document.addEventListener('mouseenter', (e) => {
+                if (e.target.hasAttribute('data-tooltip') && !tooltipElements.includes(e.target)) {
+                    showTooltip(e.target, e);
+                }
+            }, true);
+
+            document.addEventListener('mouseleave', (e) => {
+                if (e.target.hasAttribute('data-tooltip') && !tooltipElements.includes(e.target)) {
+                    hideTooltip();
+                }
+            }, true);
+
+            // Subscriber selection handling
+            document.getElementById('subscriber-select').addEventListener('change', (e) => {
+                console.log('Selected subscriber:', e.target.value);
+                // Here you would typically fetch new data for the selected subscriber
+            });
+
+            // Server selection handling
+            const serverOptions = document.querySelectorAll('.server-option');
+            const serverInfo = document.querySelector('.server-details');
+            
+            const serverData = {
+                'web-01': {
+                    ip: '192.168.1.101',
+                    os: 'Win Server 2022',
+                    lastUpdate: '3m ago',
+                    cpu: { percent: 68, cores: '5.4/8', top: 'w3wp.exe (24%)' },
+                    ram: { percent: 80, used: '12.8', total: '16', available: '3.2GB' },
+                    drives: [
+                        { label: '💿 C:\\', percent: 45, used: '450GB', total: '1TB' },
+                        { label: '💽 D:\\', percent: 60, used: '1.2TB', total: '2TB' },
+                        { label: '🔄 E:\\', percent: 89, used: '890GB', total: '1TB', warning: true },
+                        { label: '🌐 NAS', percent: 42, used: '2.1TB', total: '5TB' }
+                    ]
+                },
+                'app-02': {
+                    ip: '192.168.1.102',
+                    os: 'Win Server 2019',
+                    lastUpdate: '2m ago',
+                    cpu: { percent: 45, cores: '3.6/8', top: 'sqlservr.exe (18%)' },
+                    ram: { percent: 67, used: '10.7', total: '16', available: '5.3GB' },
+                    drives: [
+                        { label: '💿 C:\\', percent: 38, used: '380GB', total: '1TB' },
+                        { label: '💽 D:\\', percent: 72, used: '1.4TB', total: '2TB' },
+                        { label: '📝 F:\\', percent: 23, used: '230GB', total: '1TB' }
+                    ]
+                },
+                'db-03': {
+                    ip: '192.168.1.103',
+                    os: 'Win Server 2022',
+                    lastUpdate: '1m ago',
+                    cpu: { percent: 85, cores: '6.8/8', top: 'sqlservr.exe (45%)' },
+                    ram: { percent: 92, used: '29.4', total: '32', available: '2.6GB' },
+                    drives: [
+                        { label: '💿 C:\\', percent: 42, used: '420GB', total: '1TB' },
+                        { label: '🗄️ D:\\', percent: 78, used: '3.9TB', total: '5TB' },
+                        { label: '📝 E:\\', percent: 56, used: '560GB', total: '1TB' },
+                        { label: '🔄 F:\\', percent: 91, used: '1.8TB', total: '2TB', warning: true }
+                    ]
+                },
+                'file-04': {
+                    ip: '192.168.1.104',
+                    os: 'Win Server 2019',
+                    lastUpdate: '8m ago',
+                    cpu: { percent: 32, cores: '2.6/8', top: 'explorer.exe (8%)' },
+                    ram: { percent: 48, used: '7.7', total: '16', available: '8.3GB' },
+                    drives: [
+                        { label: '💿 C:\\', percent: 35, used: '350GB', total: '1TB' },
+                        { label: '📁 D:\\', percent: 67, used: '6.7TB', total: '10TB' },
+                        { label: '📦 E:\\', percent: 89, used: '4.5TB', total: '5TB', warning: true },
+                        { label: '🌐 NET', percent: 34, used: '3.4TB', total: '10TB' }
+                    ]
+                }
+            };
+
+            function updateServerDisplay(serverId) {
+                const data = serverData[serverId];
+                if (!data) return;
+                
+                // Update server info
+                serverInfo.innerHTML = `
+                    <span class="server-ip">${data.ip}</span>
+                    <span class="server-os">${data.os}</span>
+                    <span class="last-update">Updated ${data.lastUpdate}</span>
+                `;
+                
+                // Update CPU
+                const cpuItem = document.querySelector('.progress-item');
+                const cpuFill = cpuItem.querySelector('.progress-fill');
+                const cpuValue = cpuItem.querySelector('.progress-value');
+                cpuFill.style.width = data.cpu.percent + '%';
+                cpuValue.innerHTML = `${data.cpu.percent}% <span class="progress-details">${data.cpu.cores} cores</span>`;
+                
+                // Update RAM
+                const ramItem = document.querySelectorAll('.progress-item')[1];
+                const ramFill = ramItem.querySelector('.progress-fill');
+                const ramValue = ramItem.querySelector('.progress-value');
+                ramFill.style.width = data.ram.percent + '%';
+                ramValue.innerHTML = `${data.ram.percent}% <span class="progress-details">${data.ram.used}/${data.ram.total}GB</span>`;
+                
+                // Update drives
+                const drivesCompact = document.querySelector('.drives-compact');
+                drivesCompact.innerHTML = data.drives.map(drive => `
+                    <div class="drive-compact" data-tooltip="${drive.label.replace('🌐', 'Network')} Drive&#10;${drive.used} used of ${drive.total} total&#10;Free space: ${parseInt(drive.total.replace(/[^\d]/g, '')) - parseInt(drive.used.replace(/[^\d]/g, ''))}${drive.total.includes('TB') ? 'TB' : 'GB'}&#10;Usage: ${drive.percent}%">
+                        <div class="drive-info">
+                            <span class="drive-label">${drive.label}</span>
+                            <span class="drive-value">${drive.percent}%</span>
+                        </div>
+                        <div class="drive-bar-mini">
+                            <div class="drive-fill ${drive.warning ? 'progress-warning' : 'progress-disk'}" style="width: ${drive.percent}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            serverOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove active class from all options
+                    serverOptions.forEach(opt => opt.classList.remove('active'));
+                    // Add active class to clicked option
+                    option.classList.add('active');
+                    // Update display
+                    updateServerDisplay(option.dataset.server);
+                });
+            });
+            
+            // Initialize with default server
+            updateServerDisplay('web-01');
+
+            // Subtle real-time updates animation
+            setInterval(() => {
+                const metrics = document.querySelectorAll('.metric-value');
+                metrics.forEach(metric => {
+                    if (Math.random() > 0.98) {
+                        metric.style.background = '#f0f9ff';
+                        metric.style.padding = '2px 6px';
+                        metric.style.borderRadius = '4px';
+                        setTimeout(() => {
+                            metric.style.background = 'transparent';
+                            metric.style.padding = '0';
+                        }, 1500);
+                    }
+                });
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
