@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard</title>
+    <!-- Chart.js CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Base styles -->
+    <link rel="stylesheet" href="styles/base.css">
+    <!-- Theme styles - Change the theme by swapping the CSS file -->
+    <!-- <link rel="stylesheet" href="styles/theme-wallstreet.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-federal.css"> -->
+    <!-- <link rel="stylesheet" href="styles/theme-elegance.css"> -->
+     <link rel="stylesheet" href="styles/theme-glassy.css">
+    <!-- <link rel="stylesheet" href="styles/theme-mainframe.css">--> 
+    <!-- <link rel="stylesheet" href="styles/theme-raiders.css"> -->
+   <!-- <link rel="stylesheet" href="styles/theme-patriotic.css">  -->
+   
+    <!-- Health Clock Module -->
+    <script type="module">
+        import HealthClock from './js/health-clock.js';
+        
+        // Initialize the health clock when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create health clock instance with custom configuration
+            window.healthClock = new HealthClock('health-clock', {
+                cometTailLength: 6,
+                cometFalloffRate: 0.7,
+                baseBrightness: 0.4,
+                oppositePeriodBrightness: 0.15,
+                cometBrightnessBoost: 0.6,
+                disableFutureHours: true,
+                
+                // Optional callbacks for external integration
+                onHourClick: (hour, data) => {
+                    console.log(`Hour ${hour} clicked:`, data);
+                },
+                onHourPin: (hour, isPinned, data) => {
+                    console.log(`Hour ${hour} ${isPinned ? 'pinned' : 'unpinned'}:`, data);
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">System Health Dashboard</h1>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="subscriber-select">Subscriber:</label>
+                    <select id="subscriber-select">
+                        <option>Application A</option>
+                        <option>Application B</option>
+                        <option>Payment Service</option>
+                        <option>User Service</option>
+                        <option>Database Cluster</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <button id="prev-date" class="nav-btn">‹</button>
+                    <span id="date-label" class="date-label"></span>
+                    <button id="next-date" class="nav-btn">›</button>
+                    <button id="today-btn">Today</button>
+                </div>
+            </div>
+            
+            <div class="view-tabs">
+                <button class="tab" data-target="day-view">Daily</button>
+                <button class="tab" data-target="week-view">Weekly</button>
+                <button class="tab" data-target="month-view">Monthly</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <!-- Daily View -->
+        <div id="day-view" class="view">
+            <div class="dashboard-grid">
+                <!-- Overall Health Status -->
+                <div class="card">
+                    <h3>Overall Health Status</h3>
+                    <div class="status-grid">
+                        <div class="status-item status-healthy" data-tooltip="8 applications running optimally&#10;All systems operational&#10;Average uptime: 99.8%">
+                            <span class="status-count">8</span>
+                            <span class="status-label">Healthy</span>
+                        </div>
+                        <div class="status-item status-degraded" data-tooltip="2 applications with performance issues&#10;Response times elevated&#10;Memory usage above 80%">
+                            <span class="status-count">2</span>
+                            <span class="status-label">Degraded</span>
+                        </div>
+                        <div class="status-item status-unhealthy" data-tooltip="1 application offline&#10;Database connection failed&#10;Last seen: 14 minutes ago">
+                            <span class="status-count">1</span>
+                            <span class="status-label">Unhealthy</span>
+                        </div>
+                    </div>
+                    <div class="metric-item" data-tooltip="Based on successful health checks vs total checks&#10;Target: 99.5%&#10;Current month: 98.9%">
+                        <span class="metric-label">Overall Uptime</span>
+                        <span class="metric-value">98.7%</span>
+                    </div>
+                </div>
+
+                <!-- 24-Hour Health Clock -->
+                <div class="card">
+                    <h3>24-Hour Health Clock</h3>
+                    <div id="health-clock">
+                        <!-- Clock will be generated by the HealthClock module -->
+                    </div>
+                    
+                    <div class="clock-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--success);"></div>
+                            <span>Healthy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--warning);"></div>
+                            <span>Degraded</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--error);"></div>
+                            <span>Unhealthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other cards can be added here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Simple dashboard initialization without health clock
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize date controls
+            let currentDate = new Date();
+            
+            function updateDateLabel(date) {
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                document.getElementById('date-label').textContent = date.toLocaleDateString('en-US', options);
+            }
+            
+            updateDateLabel(currentDate);
+
+            document.getElementById('today-btn').addEventListener('click', () => {
+                currentDate = new Date();
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('prev-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 1);
+                updateDateLabel(currentDate);
+            });
+
+            document.getElementById('next-date').addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 1);
+                updateDateLabel(currentDate);
+            });
+        });
+    </script>
+</body>
+</html>
