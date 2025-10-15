@@ -1,0 +1,4590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Time Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .task-card { margin-bottom: 1rem; }
+    .due-badge { font-size: 0.9rem; }
+    .summary-card { background-color: #e9ecef; }
+    .action-btn { margin-right: 0.5rem; }
+    .urgency-high { color: #dc3545; }
+    .urgency-med { color: #ffc107; }
+    .urgency-low { color: #28a745; }
+    .importance-high { background-color: #dc3545; color: white; }
+    .importance-med { background-color: #ffc107; color: black; }
+    .importance-low { background-color: #28a745; color: white; }
+    .calendar-table { width: 100%; table-layout: fixed; }
+    .calendar-table th, .calendar-table td { text-align: center; vertical-align: top; }
+    .calendar-table td { height: 100px; border: 1px solid #dee2e6; }
+    .task-event { background-color: #007bff; color: white; padding: 2px 5px; margin: 2px; border-radius: 3px; cursor: pointer; }
+    .sortable:hover { cursor: pointer; text-decoration: underline; }
+    .editable { cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s; }
+    .editable:hover { background-color: #f8f9fa; }
+    .editing { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+    .quick-time-btn { margin: 0 2px; }
+    .task-actions { opacity: 0; transition: opacity 0.2s; }
+    .task-card:hover .task-actions { opacity: 1; }
+    
+    /* Sidebar Layout */
+    .app-container { display: flex; min-height: 100vh; }
+    .sidebar { width: 320px; background-color: #f8f9fa; border-right: 1px solid #dee2e6; padding: 1rem; flex-shrink: 0; }
+    .main-content { flex: 1; display: flex; flex-direction: column; }
+    .header-bar { background-color: white; border-bottom: 1px solid #dee2e6; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .header-title { margin: 0; font-size: 1.5rem; flex-shrink: 0; }
+    .header-filters { flex: 1; justify-content: center; }
+    .header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .content-area { flex: 1; padding: 1.5rem; }
+    .quick-add-form { background-color: white; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; }
+    
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; }
+      .app-container { flex-direction: column; }
+      .header-bar { flex-direction: column; gap: 1rem; padding: 1rem; }
+      .header-filters { flex-direction: column; gap: 0.5rem; }
+      .header-title { font-size: 1.25rem; }
+      .kanban-board { flex-direction: column; }
+      .kanban-lane { min-width: 100%; margin-bottom: 1rem; }
+    }
+    
+    /* Today View Styles */
+    .today-container {
+      padding: 20px;
+    }
+    
+    .today-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+    
+    .today-card:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .today-card-header {
+      display: flex;
+      align-items: center;
+      padding: 20px 20px 0 20px;
+      border-bottom: 1px solid #e9ecef;
+      margin-bottom: 0;
+      padding-bottom: 15px;
+    }
+    
+    .today-card-header h5 {
+      color: #495057;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .today-card-header i {
+      color: #6c757d;
+      font-size: 1.1em;
+    }
+    
+    .today-card-body {
+      padding: 20px;
+      min-height: 300px;
+    }
+    
+    .todos-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .todo-item:hover {
+      background: #e9ecef;
+      border-color: #dee2e6;
+    }
+    
+    .todo-item.completed {
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
+    
+    .todo-checkbox {
+      margin-right: 12px;
+      margin-top: 2px;
+    }
+    
+    .todo-content {
+      flex: 1;
+    }
+    
+    .todo-title {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 4px;
+    }
+    
+    .todo-text {
+      font-size: 0.9em;
+      color: #6c757d;
+      margin: 0;
+    }
+    
+    .accomplishments-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .accomplishment-item {
+      padding: 16px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .accomplishment-item:hover {
+      box-shadow: 0 4px 8px rgba(255, 234, 167, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    .accomplishment-title {
+      font-weight: 600;
+      color: #856404;
+      margin-bottom: 8px;
+    }
+    
+    .accomplishment-content {
+      color: #856404;
+      margin: 0;
+    }
+    
+    .accomplishment-time {
+      font-size: 0.8em;
+      color: #6c757d;
+      margin-top: 8px;
+    }
+    
+    .today-tasks {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .today-task-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .today-task-item:hover {
+      background: #e9ecef;
+      border-color: #dee2e6;
+    }
+    
+    .today-task-item.overdue {
+      border-left: 4px solid #dc3545;
+      background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    }
+    
+    .today-task-urgency {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 12px;
+    }
+    
+    .today-task-urgency.high { background: #dc3545; }
+    .today-task-urgency.med { background: #ffc107; }
+    .today-task-urgency.low { background: #28a745; }
+
+    /* Task Overview Filter Styles */
+    .task-overview-filters {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .task-overview-filters .btn-group .btn {
+      padding: 8px 16px;
+      font-size: 0.9em;
+      font-weight: 500;
+      border: 1px solid #0d6efd;
+      color: #0d6efd;
+      background: white;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .task-overview-filters .btn-group .btn:hover {
+      background: linear-gradient(135deg, #e7f1ff 0%, #cce7ff 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+    }
+    
+    .task-overview-filters .btn-group .btn.active {
+      background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+      color: white;
+      border-color: #0d6efd;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+    
+    .task-overview-filters .btn-group .btn.active:hover {
+      background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+      transform: translateY(-1px);
+    }
+    
+    .task-overview-filters .btn-group .btn i {
+      margin-right: 6px;
+    }
+    
+    /* Enhanced Task Item Styles */
+    .today-task-item.due-today {
+      border-left: 4px solid #ffc107;
+      background: linear-gradient(135deg, #fff9e6 0%, #fffaf0 100%);
+    }
+    
+    .today-task-item .badge {
+      font-size: 0.7em;
+      padding: 2px 6px;
+    }
+    
+    .today-task-item .text-end small {
+      font-size: 0.75em;
+      line-height: 1.2;
+    }
+    
+    .today-task-item .text-end small:first-child {
+      font-weight: 500;
+      color: #495057;
+    }
+    
+    /* Filter button animations */
+    @keyframes buttonPress {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(1px); }
+      100% { transform: translateY(0); }
+    }
+    
+    .task-overview-filters .btn:active {
+      animation: buttonPress 0.1s ease;
+    }
+
+    /* Work Tab Styles */
+    .work-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .work-task-header {
+      padding: 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .work-task-header h4 {
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .time-logs-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .time-logs-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .time-logs-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    .time-logs-list::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+    
+    .time-logs-list::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    #workTab {
+      transition: opacity 0.2s ease;
+    }
+    
+    #workTab.active {
+      opacity: 1;
+    }
+    
+    /* Custom date picker styling */
+    #customDateContainer {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    #customDateToggle:checked + label {
+      color: #007bff !important;
+      font-weight: 500;
+    }
+    
+    .form-check-label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Inline Form Styles */
+    .todo-form, .accomplishment-form {
+      padding: 16px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .todo-form .input-group, .accomplishment-form .input-group {
+      margin-bottom: 8px;
+    }
+    
+    .todo-form input, .accomplishment-form input {
+      border: 1px solid #dee2e6;
+      border-radius: 6px 0 0 6px;
+      padding: 10px 12px;
+      font-size: 0.95em;
+      transition: all 0.2s ease;
+    }
+    
+    .todo-form input:focus, .accomplishment-form input:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+      outline: none;
+    }
+    
+    .todo-form .btn, .accomplishment-form .btn {
+      border-radius: 0 6px 6px 0;
+      padding: 10px 16px;
+      transition: all 0.2s ease;
+    }
+    
+    .todo-details, .accomplishment-details {
+      animation: slideDown 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .todo-details textarea, .accomplishment-details textarea {
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.9em;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .todo-details textarea:focus, .accomplishment-details textarea:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+      outline: none;
+    }
+    
+    .todo-form small, .accomplishment-form small {
+      color: #6c757d;
+      font-size: 0.8em;
+      font-style: italic;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        max-height: 200px;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Form button hover effects */
+    .todo-form .btn-primary:hover {
+      background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    }
+    
+    .accomplishment-form .btn-success:hover {
+      background: linear-gradient(135deg, #198754 0%, #157347 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+    }
+    
+    /* Enhanced placeholder styling */
+    .todo-form input::placeholder, .accomplishment-form input::placeholder {
+      color: #adb5bd;
+      font-style: italic;
+    }
+    
+    .todo-details textarea::placeholder, .accomplishment-details textarea::placeholder {
+      color: #adb5bd;
+      font-style: italic;
+    }
+
+    /* Delete Confirmation Styles */
+    .delete-confirmation {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .todo-item.deleting, .accomplishment-item.deleting {
+      transform: scale(0.98);
+      transition: transform 0.2s ease;
+    }
+    
+    .delete-confirmation .btn {
+      padding: 4px 12px;
+      font-size: 0.85em;
+      border-radius: 4px;
+    }
+    
+    .delete-confirmation .btn-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      border: none;
+      color: white;
+    }
+    
+    .delete-confirmation .btn-danger:hover {
+      background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .delete-confirmation .btn-outline-secondary {
+      border-color: #6c757d;
+      color: #6c757d;
+    }
+    
+    .delete-confirmation .btn-outline-secondary:hover {
+      background: #6c757d;
+      color: white;
+      transform: translateY(-1px);
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Error Toast Styles */
+    .error-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      border: 1px solid #f5c6cb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      max-width: 300px;
+    }
+    
+    .error-toast.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .error-toast .fas {
+      color: #721c24;
+    }
+    
+    .error-toast span {
+      color: #721c24;
+      font-weight: 500;
+    }
+
+    /* Enhanced Calendar Styles */
+    .calendar-table {
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 2px;
+    }
+    
+    .calendar-day {
+      position: relative;
+      height: 120px;
+      vertical-align: top;
+      padding: 8px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .calendar-day:hover {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .calendar-day.today {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      border-color: #2196f3;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3);
+    }
+    
+    .calendar-day-number {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+    
+    .calendar-indicators {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    
+    .day-indicator {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 500;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    
+    .day-indicator.urgent {
+      background: #dc3545;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    
+    .day-indicator.overdue {
+      background: #fd7e14;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .day-indicator.tasks {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .day-indicator.hours {
+      background: #198754;
+      color: white;
+    }
+    
+    .day-indicator.todos {
+      background: #0d6efd;
+      color: white;
+    }
+    
+    .day-indicator.accomplishments {
+      background: #ffc107;
+      color: #212529;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .calendar-tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      max-width: 300px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .calendar-tooltip.show {
+      opacity: 1;
+    }
+    
+    .tooltip-content h6 {
+      margin: 0 0 8px 0;
+      color: #ffc107;
+      border-bottom: 1px solid #444;
+      padding-bottom: 4px;
+    }
+    
+    .tooltip-content .tooltip-section {
+      margin-bottom: 8px;
+    }
+    
+    .tooltip-content .tooltip-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .tooltip-content .tooltip-label {
+      font-weight: 600;
+      color: #adb5bd;
+      margin-bottom: 4px;
+    }
+    
+    .tooltip-content .task-item {
+      margin-left: 8px;
+      margin-bottom: 2px;
+    }
+    
+    .tooltip-content .urgency-high { color: #ff6b6b; }
+    .tooltip-content .urgency-med { color: #ffd93d; }
+    .tooltip-content .urgency-low { color: #6bcf7f; }
+
+    /* Calendar Header Styles */
+    .calendar-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .calendar-nav h4 {
+      color: #495057;
+      font-weight: 600;
+      min-width: 200px;
+      text-align: center;
+    }
+    
+    .calendar-filters .form-label {
+      font-weight: 500;
+      color: #6c757d;
+    }
+    
+    .calendar-filters .form-select {
+      min-width: 120px;
+    }
+
+    /* Spectacular Kanban Board Styles */
+    .kanban-board {
+      display: flex;
+      gap: 1rem;
+      height: calc(100vh - 200px);
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+    
+    .kanban-lane {
+      flex: 1;
+      min-width: 280px;
+      background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .kanban-lane-header {
+      background: linear-gradient(135deg, #6c757d, #495057);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .kanban-lane-header h5 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .lane-counter {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      color: #6c757d;
+      border-radius: 12px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+    
+    .kanban-lane-content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      min-height: 200px;
+    }
+    
+    /* Spectacular Task Cards */
+    .kanban-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+      padding: 1rem;
+      cursor: grab;
+      transition: all 0.3s ease;
+      border-left: 4px solid #6c757d;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kanban-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .kanban-card.dragging {
+      opacity: 0.5;
+      transform: rotate(5deg);
+      cursor: grabbing;
+    }
+    
+    .kanban-card.urgency-high {
+      border-left-color: #dc3545;
+      background: linear-gradient(135deg, #fff, #fff5f5);
+    }
+    
+    .kanban-card.urgency-med {
+      border-left-color: #ffc107;
+      background: linear-gradient(135deg, #fff, #fffdf0);
+    }
+    
+    .kanban-card.urgency-low {
+      border-left-color: #28a745;
+      background: linear-gradient(135deg, #fff, #f0fff4);
+    }
+    
+    .kanban-card.overdue {
+      background: linear-gradient(135deg, #fff, #ffebee);
+      border-left-color: #e91e63;
+      animation: pulse-overdue 2s infinite;
+    }
+    
+    @keyframes pulse-overdue {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    /* Notes indicator on cards */
+    .card-notes-indicator {
+      color: #ffc107;
+      font-size: 0.9em;
+      cursor: help;
+      transition: color 0.2s ease;
+    }
+    
+    .card-notes-indicator:hover {
+      color: #ffb300;
+    }
+    
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+      line-height: 1.3;
+    }
+    
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+    
+    .card-due-date {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .card-due-date.overdue {
+      color: #e91e63;
+      font-weight: 600;
+    }
+    
+    .card-due-date.due-soon {
+      color: #ff9800;
+      font-weight: 600;
+    }
+    
+    .card-hours {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 500;
+    }
+    
+    .progress-bar-container {
+      margin-bottom: 0.75rem;
+    }
+    
+    .progress-bar {
+      height: 6px;
+      background: #e9ecef;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745, #20c997);
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+    
+    .progress-text {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-top: 0.25rem;
+    }
+    
+    .card-quick-actions {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .kanban-card:hover .card-quick-actions {
+      opacity: 1;
+    }
+    
+    .quick-action-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .quick-action-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Simplified Lane Headers - subtle colors with accents */
+    .kanban-lane-header {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-bottom: 3px solid #6c757d; /* Default accent */
+      padding: 12px 16px;
+      border-radius: 6px 6px 0 0;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .lane-backlog .kanban-lane-header {
+      border-bottom-color: #6c757d;
+    }
+    
+    .lane-inprogress .kanban-lane-header {
+      border-bottom-color: #007bff;
+    }
+    
+    .lane-blocked .kanban-lane-header {
+      border-bottom-color: #ffc107;
+    }
+    
+    .lane-done .kanban-lane-header {
+      border-bottom-color: #28a745;
+    }
+    
+    .kanban-lane-header:hover {
+      background: #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Drag & Drop Zones */
+    .kanban-lane.drag-over {
+      background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+      transform: scale(1.02);
+    }
+    
+    .drop-zone {
+      min-height: 100px;
+      border: 2px dashed transparent;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .drop-zone.drag-over {
+      border-color: #007bff;
+      background: rgba(0, 123, 255, 0.1);
+    }
+    
+    /* Status History Styles */
+    .status-history-entry {
+      min-height: 44px;
+      padding: 8px 0;
+      border-left: 2px solid transparent;
+      margin-left: -2px;
+      padding-left: 2px;
+    }
+    
+    .status-history-entry.recent-status {
+      border-left-color: #007bff;
+      background: rgba(0, 123, 255, 0.02);
+      border-radius: 4px;
+      padding-left: 8px;
+      margin-left: -8px;
+    }
+    
+    .status-timeline-dot {
+      position: relative;
+    }
+    
+    .status-timeline-dot::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 20px;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 30px;
+      background: #dee2e6;
+      z-index: -1;
+    }
+    
+    .status-history-entry:last-child .status-timeline-dot::after {
+      display: none;
+    }
+    
+    /* Responsive status history */
+    @media (max-width: 576px) {
+      .status-history-entry .d-flex.flex-column.flex-md-row {
+        align-items: stretch !important;
+      }
+      
+      .status-history-entry .badge {
+        align-self: flex-start;
+        margin-bottom: 4px;
+      }
+      
+      .status-history-entry small {
+        font-size: 0.7rem !important;
+        line-height: 1.2;
+      }
+    }
+    
+    /* Personal Velocity Estimation Styles */
+    .estimation-panel {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6 !important;
+    }
+    
+    .estimation-panel .form-range {
+      margin: 8px 0;
+    }
+    
+    .estimation-panel .form-range::-webkit-slider-thumb {
+      background: #007bff;
+    }
+    
+    .estimation-panel .form-range::-moz-range-thumb {
+      background: #007bff;
+      border: none;
+    }
+    
+    .estimation-panel .small {
+      font-size: 0.8rem;
+    }
+    
+    #velocityPrediction {
+      background: rgba(255, 255, 255, 0.8);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+      .estimation-panel .col-md-4 {
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left Sidebar for Quick Add -->
+    <div class="sidebar">
+      <h5 class="mb-3"><i class="fas fa-plus-circle"></i> Quick Add Task</h5>
+      <div class="quick-add-form">
+        <div class="mb-3">
+          <label class="form-label">Task Title</label>
+          <input type="text" class="form-control" id="quickTaskTitle" placeholder="Enter task title..." required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-control" id="quickTaskDue" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="quickTaskStatus">
+            <option value="Ready">Ready</option>
+            <option value="Estimated">Estimated</option>
+            <option value="InProgress">InProgress</option>
+            <option value="Blocked">Blocked</option>
+            <option value="OnHold">OnHold</option>
+            <option value="Completed">Completed</option>
+            <option value="Abandoned">Abandoned</option>
+            <option value="Archived">Archived</option>
+          </select>
+        </div>
+        <button class="btn btn-primary w-100 mb-3" id="quickAddBtn">
+          <i class="fas fa-plus"></i> Add Task
+        </button>
+        
+        <!-- Advanced Options Toggle -->
+        <button class="btn btn-outline-secondary w-100 mb-2" id="expandAddBtn">
+          <i class="fas fa-chevron-down"></i> More Options
+        </button>
+        
+        <!-- Expanded form (hidden by default) -->
+        <div id="expandedAddForm" style="display: none;">
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="quickTaskText" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" id="quickTaskNotes" rows="4" placeholder="Additional notes, links, reminders..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Urgency</label>
+            <select class="form-select" id="quickTaskUrgency">
+              <option value="Low">Low</option>
+              <option value="Med">Med</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Importance</label>
+            <select class="form-select" id="quickTaskImportance">
+              <option value="Low">Low</option>
+              <option value="Med">Med</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Estimate (hrs)</label>
+            <input type="number" class="form-control" id="quickTaskEstimate" min="0" step="0.1" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Header Bar -->
+      <div class="header-bar">
+        <h1 class="header-title"><i class="fas fa-tasks"></i> Task Time Tracker</h1>
+        
+        <!-- Import/Export on the far right -->
+        <div class="header-actions">
+          <button class="btn btn-outline-secondary btn-sm" id="exportBtn">
+            <i class="fas fa-download"></i> Export
+          </button>
+          <input type="file" id="importFile" accept=".json" style="display: none;">
+          <button class="btn btn-outline-secondary btn-sm" id="importBtn">
+            <i class="fas fa-upload"></i> Import
+          </button>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <a class="nav-link" id="boardTab" href="#board">Board</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="monthTab" href="#month">Month</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" id="todayTab" href="#today">Today</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="reportsTab" href="#reports">
+              <i class="fas fa-chart-bar me-1"></i>Reports
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="workTab" href="#work" style="display: none;">
+              <i class="fas fa-edit me-1"></i>Work
+            </a>
+          </li>
+        </ul>
+    
+    <div id="summary"></div>
+    <div id="taskList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@7.1.1/build/index.js';
+
+    console.log('Script loaded at', new Date().toISOString());
+
+    // Navigation state
+    let currentView = 'board';
+    let monthOffset = 0; // Months from current month
+
+    const dbPromise = openDB('TaskTimeTracker', 5, {
+      upgrade(db, oldVersion) {
+        console.log('Upgrading database from version', oldVersion);
+        if (oldVersion < 1) {
+          const taskStore = db.createObjectStore('tasks', { keyPath: 'id', autoIncrement: true });
+          taskStore.createIndex('dueOn', 'dueOn');
+          taskStore.createIndex('status', 'status');
+          taskStore.createIndex('urgency', 'urgency');
+          const timeStore = db.createObjectStore('timeLogs', { keyPath: 'id', autoIncrement: true });
+          timeStore.createIndex('taskId', 'taskId');
+          timeStore.createIndex('dateLogged', 'dateLogged');
+        }
+        if (oldVersion < 5) {
+          // Add todos table
+          if (!db.objectStoreNames.contains('todos')) {
+            const todoStore = db.createObjectStore('todos', { keyPath: 'id', autoIncrement: true });
+            todoStore.createIndex('date', 'date');
+            todoStore.createIndex('completed', 'completed');
+          }
+          // Add accomplishments table  
+          if (!db.objectStoreNames.contains('accomplishments')) {
+            const accomplishmentStore = db.createObjectStore('accomplishments', { keyPath: 'id', autoIncrement: true });
+            accomplishmentStore.createIndex('date', 'date');
+          }
+        }
+      }
+    });
+
+    // Migrate existing tasks to have status history
+    async function migrateTasksForStatusHistory() {
+      try {
+        const db = await dbPromise;
+        const allTasks = await db.getAll('tasks');
+        let migrated = 0;
+        
+        console.log('Checking', allTasks.length, 'tasks for status history migration');
+        
+        for (const task of allTasks) {
+          if (!task.statusHistory) {
+            console.log('Migrating task:', task.title, 'status:', task.status);
+            task.statusHistory = [{
+              status: task.status || 'Ready',
+              timestamp: task.createdAt || new Date().toISOString(),
+              note: 'Legacy task - initial status (migrated)'
+            }];
+            
+            if (!task.createdAt) {
+              task.createdAt = new Date().toISOString();
+            }
+            
+            await db.put('tasks', task);
+            migrated++;
+          }
+        }
+        
+        if (migrated > 0) {
+          console.log('Migrated', migrated, 'tasks to have status history');
+        } else {
+          console.log('All tasks already have status history');
+        }
+      } catch (err) {
+        console.error('Error migrating tasks for status history:', err);
+      }
+    }
+
+    // Run migration on app load
+    migrateTasksForStatusHistory();
+
+    const stateTransitions = {
+      'Ready': ['Estimated', 'InProgress', 'Abandoned', 'Archived'],
+      'Estimated': ['InProgress', 'Abandoned', 'Archived'],
+      'InProgress': ['Blocked', 'OnHold', 'Completed', 'Abandoned', 'Archived'],
+      'Blocked': ['InProgress', 'OnHold', 'Abandoned', 'Archived'],
+      'OnHold': ['InProgress', 'Abandoned', 'Archived'],
+      'Completed': ['Abandoned', 'Archived'],
+      'Abandoned': ['Archived'],
+      'Archived': []
+    };
+
+    async function saveTask(task, isEdit = false) {
+      console.log('Attempting to save task:', task);
+      try {
+        const db = await dbPromise;
+        
+        // Initialize status history for new tasks
+        if (!isEdit) {
+          task.statusHistory = [{
+            status: task.status || 'Ready',
+            timestamp: new Date().toISOString(),
+            note: 'Task created'
+          }];
+          task.createdAt = new Date().toISOString();
+          console.log('New task - initialized status history:', task.statusHistory);
+        }
+        
+        // If editing, check status transition and update history
+        if (isEdit && task.status && task.id) {
+          const currentTask = await db.get('tasks', task.id);
+          console.log('Current task from DB:', currentTask);
+          console.log('Task being saved:', task);
+          
+          if (currentTask) {
+            // Initialize statusHistory if it doesn't exist (for existing tasks)
+            if (!currentTask.statusHistory) {
+              console.log('No status history found, initializing...');
+              currentTask.statusHistory = [{
+                status: currentTask.status,
+                timestamp: currentTask.createdAt || new Date().toISOString(),
+                note: 'Legacy task - initial status'
+              }];
+            }
+            
+            console.log('Current task status:', currentTask.status, 'New task status:', task.status);
+            
+            // Check if status actually changed
+            if (currentTask.status !== task.status) {
+              console.log('Status changed! Adding to history...');
+              // Validate transition
+              if (!stateTransitions[currentTask.status].includes(task.status)) {
+                console.warn(`Invalid status transition from ${currentTask.status} to ${task.status}`);
+                alert(`Invalid status transition from ${currentTask.status} to ${task.status}`);
+                return false;
+              }
+              
+              // Add status transition to history
+              task.statusHistory = [...currentTask.statusHistory, {
+                status: task.status,
+                timestamp: new Date().toISOString(),
+                note: `Changed from ${currentTask.status} to ${task.status}`
+              }];
+              
+              console.log('Status changed - updated history:', task.statusHistory);
+            } else {
+              console.log('Status unchanged, preserving existing history');
+              // Status didn't change, preserve existing history
+              task.statusHistory = currentTask.statusHistory;
+            }
+            
+            // Preserve creation timestamp
+            task.createdAt = currentTask.createdAt || new Date().toISOString();
+          }
+        }
+        
+        // Now perform the write operation
+        const tx = db.transaction('tasks', 'readwrite');
+        await tx.store.put(task);
+        await tx.done;
+        console.log('Task saved successfully with status history:', task);
+        return true;
+      } catch (err) {
+        console.error('Error saving task:', err);
+        alert('Failed to save task: ' + err.message);
+        return false;
+      }
+    }
+
+    async function saveTimeLog(timeLog) {
+      console.log('Attempting to save time log:', timeLog);
+      try {
+        const db = await dbPromise;
+        const task = await db.get('tasks', timeLog.taskId);
+        if (!task || !['Estimated', 'InProgress'].includes(task.status)) {
+          console.warn('Invalid task status for time log:', task?.status);
+          alert('Time can only be logged for tasks in Estimated or InProgress status.');
+          return false;
+        }
+        const tx = db.transaction('timeLogs', 'readwrite');
+        await tx.store.put(timeLog);
+        await tx.done;
+        console.log('Time log saved successfully:', timeLog);
+        return true;
+      } catch (err) {
+        console.error('Error saving time log:', err);
+        alert('Failed to save time log: ' + err.message);
+        return false;
+      }
+    }
+
+    async function deleteTask(taskId) {
+      console.log('Attempting to delete task:', taskId);
+      try {
+        const db = await dbPromise;
+        const tx = db.transaction(['tasks', 'timeLogs'], 'readwrite');
+        await tx.objectStore('tasks').delete(taskId);
+        const timeLogs = await tx.objectStore('timeLogs').index('taskId').getAll(taskId);
+        for (const log of timeLogs) {
+          await tx.objectStore('timeLogs').delete(log.id);
+        }
+        await tx.done;
+        console.log('Task deleted successfully:', taskId);
+      } catch (err) {
+        console.error('Error deleting task:', err);
+        alert('Failed to delete task: ' + err.message);
+      }
+    }
+
+    async function deleteTimeLog(logId) {
+      console.log('Attempting to delete time log:', logId);
+      try {
+        const db = await dbPromise;
+        const tx = db.transaction('timeLogs', 'readwrite');
+        await tx.store.delete(logId);
+        await tx.done;
+        console.log('Time log deleted successfully:', logId);
+      } catch (err) {
+        console.error('Error deleting time log:', err);
+        alert('Failed to delete time log: ' + err.message);
+      }
+    }
+
+    async function getTasks(filters = {}, includeAll = false) {
+      console.log('Fetching tasks with filters:', filters, 'includeAll:', includeAll);
+      try {
+        const db = await dbPromise;
+        const tasks = await db.getAll('tasks');
+        const filteredTasks = tasks.filter(task => {
+          if (filters.status && task.status !== filters.status) return false;
+          if (filters.urgency && task.urgency !== filters.urgency) return false;
+          return includeAll || !['Completed', 'Abandoned', 'Archived'].includes(task.status);
+        });
+        console.log('Fetched tasks:', filteredTasks);
+        return filteredTasks;
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+        alert('Failed to fetch tasks: ' + err.message);
+        return [];
+      }
+    }
+
+    async function getTimeLogs(taskId, startDate, endDate) {
+      console.log('Fetching time logs for task:', taskId, 'range:', startDate, endDate);
+      try {
+        const db = await dbPromise;
+        const logs = await db.getAllFromIndex('timeLogs', 'taskId', taskId);
+        const filteredLogs = logs.filter(log => {
+          if (!startDate || !endDate) return true;
+          return log.dateLogged >= startDate && log.dateLogged <= endDate;
+        });
+        console.log('Fetched time logs:', filteredLogs);
+        return filteredLogs;
+      } catch (err) {
+        console.error('Error fetching time logs:', err);
+        alert('Failed to fetch time logs: ' + err.message);
+        return [];
+      }
+    }
+
+    function getDateRange(view) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let startDate, endDate, periodLabel;
+      
+      if (view === 'month') {
+        const targetMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+        const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+        startDate = targetMonth.toISOString().split('T')[0];
+        endDate = monthEnd.toISOString().split('T')[0];
+        periodLabel = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      } else {
+        startDate = endDate = null;
+        periodLabel = '';
+      }
+      
+      console.log('Date range for view', view, ':', startDate, endDate, 'Label:', periodLabel);
+      return { startDate, endDate, periodLabel };
+    }
+
+    function navigatePeriod(direction) {
+      if (currentView === 'month') {
+        monthOffset += direction;
+        renderTasks(currentView);
+      }
+    }
+
+    function goToToday() {
+      monthOffset = 0;
+      renderTasks(currentView);
+    }
+
+    // Spectacular Drag & Drop functionality
+    let draggedTask = null;
+    
+    function initializeDragAndDrop() {
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('kanban-card')) {
+          draggedTask = e.target;
+          e.target.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+      });
+      
+      document.addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('kanban-card')) {
+          e.target.classList.remove('dragging');
+          draggedTask = null;
+        }
+      });
+      
+      document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const lane = e.target.closest('.kanban-lane');
+        if (lane && draggedTask) {
+          lane.classList.add('drag-over');
+        }
+      });
+      
+      document.addEventListener('dragleave', (e) => {
+        const lane = e.target.closest('.kanban-lane');
+        if (lane && !lane.contains(e.relatedTarget)) {
+          lane.classList.remove('drag-over');
+        }
+      });
+      
+      document.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const lane = e.target.closest('.kanban-lane');
+        const laneContent = e.target.closest('.kanban-lane-content');
+        
+        if (lane && laneContent && draggedTask) {
+          lane.classList.remove('drag-over');
+          
+          const taskId = parseInt(draggedTask.dataset.taskId);
+          const laneId = lane.dataset.laneId;
+          
+          // Map lane to status
+          const laneStatusMap = {
+            'backlog': 'Ready',
+            'inprogress': 'InProgress', 
+            'blocked': 'Blocked',
+            'done': 'Completed'
+          };
+          
+          const newStatus = laneStatusMap[laneId];
+          if (newStatus && newStatus !== draggedTask.dataset.taskStatus) {
+            try {
+              const db = await dbPromise;
+              const task = await db.get('tasks', taskId);
+              task.status = newStatus;
+              await saveTask(task, true);
+              
+              // Re-render the board immediately without animation to avoid null reference
+              renderTasks('board');
+            } catch (err) {
+              console.error('Error updating task status:', err);
+              alert('Failed to update task status: ' + err.message);
+            }
+          }
+        }
+      });
+    }
+
+    function getMonthCalendar(year, month) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+      const calendar = [];
+      let week = new Array(7).fill(null);
+      let dayIndex = 0;
+
+      for (let i = 0; i < startDay; i++) {
+        week[i] = null;
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        week[(startDay + day - 1) % 7] = day;
+        if ((startDay + day) % 7 === 0 || day === daysInMonth) {
+          calendar.push(week);
+          week = new Array(7).fill(null);
+        }
+      }
+      if (week.some(d => d !== null)) calendar.push(week);
+      return calendar;
+    }
+
+    async function renderTasks(view = 'board') {
+      console.log('Rendering tasks for view:', view);
+      currentView = view;
+      const { startDate, endDate } = getDateRange(view);
+      
+      // Use calendar-specific filters for month view, no filters for other views
+      let statusFilter = '';
+      let urgencyFilter = '';
+      
+      if (view === 'month') {
+        const statusElement = document.getElementById('calendarStatusFilter');
+        const urgencyElement = document.getElementById('calendarUrgencyFilter');
+        statusFilter = statusElement ? statusElement.value : '';
+        urgencyFilter = urgencyElement ? urgencyElement.value : '';
+      }
+      
+      const includeAll = view === 'all';
+      const tasks = await getTasks({ status: statusFilter, urgency: urgencyFilter }, includeAll);
+      let sortBy = sessionStorage.getItem('sortBy') || 'dueOn';
+      let sortOrder = sessionStorage.getItem('sortOrder') || 'asc';
+
+      tasks.sort((a, b) => {
+        let comparison = 0;
+        if (sortBy === 'dueOn') comparison = a.dueOn.localeCompare(b.dueOn);
+        else if (sortBy === 'urgency') comparison = ['High', 'Med', 'Low'].indexOf(a.urgency) - ['High', 'Med', 'Low'].indexOf(b.urgency);
+        else if (sortBy === 'importance') comparison = ['High', 'Med', 'Low'].indexOf(a.importance) - ['High', 'Med', 'Low'].indexOf(b.importance);
+        else if (sortBy === 'estimate') comparison = (a.estimate || 0) - (b.estimate || 0);
+        else if (sortBy === 'title') comparison = a.title.localeCompare(b.title);
+        else if (sortBy === 'status') comparison = a.status.localeCompare(b.status);
+        else if (sortBy === 'hours') {
+          const aHours = (sessionStorage.getItem(`hours_${a.id}`) || 0);
+          const bHours = (sessionStorage.getItem(`hours_${b.id}`) || 0);
+          comparison = aHours - bHours;
+        }
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = '';
+
+      if (view === 'board') {
+        // Create spectacular Kanban board
+        const board = document.createElement('div');
+        board.className = 'kanban-board';
+        
+        // Define lanes with their corresponding statuses
+        const lanes = [
+          {
+            id: 'backlog',
+            title: 'Backlog',
+            statuses: ['Ready', 'Estimated'],
+            className: 'lane-backlog'
+          },
+          {
+            id: 'inprogress',
+            title: 'In Progress',
+            statuses: ['InProgress'],
+            className: 'lane-inprogress'
+          },
+          {
+            id: 'blocked',
+            title: 'Blocked',
+            statuses: ['Blocked', 'OnHold'],
+            className: 'lane-blocked'
+          },
+          {
+            id: 'done',
+            title: 'Done',
+            statuses: ['Completed'],
+            className: 'lane-done'
+          }
+        ];
+        
+        for (const lane of lanes) {
+          const laneTasks = tasks.filter(task => lane.statuses.includes(task.status));
+          
+          const laneElement = document.createElement('div');
+          laneElement.className = `kanban-lane ${lane.className}`;
+          laneElement.dataset.laneId = lane.id;
+          
+          // Create lane header with counter
+          laneElement.innerHTML = `
+            <div class="kanban-lane-header">
+              <h5>${lane.title}</h5>
+              <span class="lane-counter">${laneTasks.length}</span>
+            </div>
+            <div class="kanban-lane-content" data-lane="${lane.id}">
+              <div class="drop-zone"></div>
+            </div>
+          `;
+          
+          const laneContent = laneElement.querySelector('.kanban-lane-content');
+          
+          // Create spectacular cards for each task
+          for (const task of laneTasks) {
+            const logs = await getTimeLogs(task.id);
+            const taskHours = logs.reduce((sum, log) => sum + log.hours, 0);
+            
+            // Calculate progress
+            const estimate = task.estimate || 0;
+            const progress = estimate > 0 ? Math.min((taskHours / estimate) * 100, 100) : 0;
+            
+            // Check if overdue
+            const today = new Date().toISOString().split('T')[0];
+            const isOverdue = task.dueOn < today;
+            const isDueSoon = !isOverdue && task.dueOn <= new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            const card = document.createElement('div');
+            card.className = `kanban-card urgency-${task.urgency.toLowerCase()}`;
+            card.dataset.taskId = task.id;
+            card.dataset.taskStatus = task.status;
+            card.draggable = true;
+            
+            if (isOverdue) {
+              card.classList.add('overdue');
+            }
+            
+            card.innerHTML = `
+              <div class="card-title" data-field="title" data-task-id="${task.id}">${task.title}</div>
+              <div class="card-meta">
+                <div class="card-due-date ${isOverdue ? 'overdue' : isDueSoon ? 'due-soon' : ''}">
+                  <i class="fas fa-calendar"></i>
+                  ${new Date(task.dueOn).toLocaleDateString()}
+                </div>
+                <div class="card-hours">
+                  <i class="fas fa-clock"></i>
+                  ${taskHours.toFixed(1)}h
+                </div>
+                ${task.notes && task.notes.trim() ? `
+                  <div class="card-notes-indicator" title="Has notes">
+                    <i class="fas fa-sticky-note"></i>
+                  </div>
+                ` : ''}
+              </div>
+              ${estimate > 0 ? `
+                <div class="progress-bar-container">
+                  <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: ${progress}%"></div>
+                  </div>
+                  <div class="progress-text">${taskHours.toFixed(1)}h / ${estimate}h (${Math.round(progress)}%)</div>
+                </div>
+              ` : ''}
+              <div class="card-quick-actions">
+                <button class="quick-action-btn btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.25">+15m</button>
+                <button class="quick-action-btn btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.5">+30m</button>
+                <button class="quick-action-btn btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="1">+1h</button>
+                <button class="quick-action-btn btn btn-outline-primary custom-time-btn" data-task-id="${task.id}">Time</button>
+                <button class="quick-action-btn btn btn-outline-info work-task-btn" data-task-id="${task.id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="quick-action-btn btn btn-outline-danger delete-task-btn" data-task-id="${task.id}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+            
+            laneContent.appendChild(card);
+          }
+          
+          board.appendChild(laneElement);
+        }
+        
+        taskList.appendChild(board);
+      } else if (view === 'today') {
+        // Render Today view - special handling
+        taskList.innerHTML = `
+          <div class="today-container">
+            <div class="row g-4">
+              <!-- Quick Todos Column -->
+              <div class="col-lg-6">
+                <div class="today-card">
+                  <div class="today-card-header">
+                    <i class="fas fa-tasks me-2"></i>
+                    <h5 class="mb-0">Quick Todos</h5>
+                  </div>
+                  <div class="today-card-body">
+                    <!-- Inline Todo Form -->
+                    <div class="todo-form mb-3">
+                      <div class="input-group mb-2">
+                        <input type="text" id="todoTitleInput" class="form-control" placeholder="Add a todo..." maxlength="100">
+                        <button class="btn btn-primary" type="button" onclick="submitTodo()">
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                      <div id="todoDetailsInput" class="todo-details" style="display: none;">
+                        <textarea class="form-control" placeholder="Optional details..." rows="2" maxlength="300"></textarea>
+                        <div class="mt-2 d-flex justify-content-end gap-2">
+                          <button class="btn btn-sm btn-outline-secondary" onclick="cancelTodoDetails()">Cancel</button>
+                          <button class="btn btn-sm btn-success" onclick="submitTodoWithDetails()">Add Todo</button>
+                        </div>
+                      </div>
+                      <small class="text-muted">Press Enter to add quickly, or click + for details</small>
+                    </div>
+                    
+                    <div id="todos-list" class="todos-list">
+                      <!-- Todos will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Daily Accomplishments Column -->
+              <div class="col-lg-6">
+                <div class="today-card">
+                  <div class="today-card-header">
+                    <i class="fas fa-trophy me-2"></i>
+                    <h5 class="mb-0">Daily Accomplishments</h5>
+                  </div>
+                  <div class="today-card-body">
+                    <!-- Inline Accomplishment Form -->
+                    <div class="accomplishment-form mb-3">
+                      <div class="input-group mb-2">
+                        <input type="text" id="accomplishmentTitleInput" class="form-control" placeholder="What did you accomplish?" maxlength="100">
+                        <button class="btn btn-success" type="button" onclick="submitAccomplishment()">
+                          <i class="fas fa-plus"></i>
+                        </button>
+                      </div>
+                      <div id="accomplishmentDetailsInput" class="accomplishment-details" style="display: none;">
+                        <textarea class="form-control" placeholder="Tell us more about this accomplishment..." rows="3" maxlength="500"></textarea>
+                        <div class="mt-2 d-flex justify-content-end gap-2">
+                          <button class="btn btn-sm btn-outline-secondary" onclick="cancelAccomplishmentDetails()">Cancel</button>
+                          <button class="btn btn-sm btn-warning" onclick="submitAccomplishmentWithDetails()">Add Accomplishment</button>
+                        </div>
+                      </div>
+                      <small class="text-muted">Press Enter to add quickly, or click + for details</small>
+                    </div>
+                    
+                    <div id="accomplishments-list" class="accomplishments-list">
+                      <!-- Accomplishments will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Today's Task Overview -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="today-card">
+                  <div class="today-card-header">
+                    <i class="fas fa-flag me-2"></i>
+                    <h5 class="mb-0">Task Overview</h5>
+                    <span class="badge bg-primary ms-auto" id="today-hours">0.0 hours logged</span>
+                  </div>
+                  <div class="today-card-body">
+                    <!-- Task Overview Filter Buttons -->
+                    <div class="task-overview-filters mb-3">
+                      <div class="btn-group" role="group" aria-label="Task time filters">
+                        <button type="button" class="btn btn-outline-primary active" id="filterToday" onclick="setTaskFilter('today')">
+                          <i class="fas fa-calendar-day me-1"></i>Today
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="filterThisWeek" onclick="setTaskFilter('thisWeek')">
+                          <i class="fas fa-calendar-week me-1"></i>This Week
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="filterNextWeek" onclick="setTaskFilter('nextWeek')">
+                          <i class="fas fa-calendar-alt me-1"></i>Next Week
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div id="today-tasks" class="today-tasks">
+                      <!-- Tasks will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        await loadTodayData();
+      } else if (view === 'month') {
+        const [year, month] = startDate.split('-').map(Number);
+        const calendar = getMonthCalendar(year - 1, month - 1);
+        
+        // Create calendar header with navigation and filters
+        let calendarHTML = `
+          <div class="calendar-header mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <!-- Month Navigation -->
+              <div class="calendar-nav d-flex align-items-center">
+                <button class="btn btn-outline-secondary btn-sm me-3" id="calendarPrevMonth">
+                  <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <h4 id="calendarPeriodLabel" class="mx-3 mb-0 fw-bold"></h4>
+                <button class="btn btn-outline-secondary btn-sm ms-3" id="calendarNextMonth">
+                  Next <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="btn btn-outline-primary btn-sm ms-3" id="calendarTodayButton">
+                  <i class="fas fa-calendar-day"></i> Today
+                </button>
+              </div>
+              
+              <!-- Calendar Filters -->
+              <div class="calendar-filters d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center">
+                  <label for="calendarStatusFilter" class="form-label me-2 mb-0">Status:</label>
+                  <select id="calendarStatusFilter" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="Ready">Ready</option>
+                    <option value="Estimated">Estimated</option>
+                    <option value="InProgress">InProgress</option>
+                    <option value="Blocked">Blocked</option>
+                    <option value="OnHold">OnHold</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Abandoned">Abandoned</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+                <div class="d-flex align-items-center">
+                  <label for="calendarUrgencyFilter" class="form-label me-2 mb-0">Urgency:</label>
+                  <select id="calendarUrgencyFilter" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="High">High</option>
+                    <option value="Med">Med</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Calculate daily stats for all days in the calendar
+        const dailyStats = {};
+        for (const task of tasks) {
+          if (!dailyStats[task.dueOn]) {
+            dailyStats[task.dueOn] = {
+              tasks: [],
+              totalHours: 0,
+              todos: 0,
+              accomplishments: 0
+            };
+          }
+          dailyStats[task.dueOn].tasks.push(task);
+        }
+        
+        // Get time logs for the month
+        for (const dateStr in dailyStats) {
+          for (const task of dailyStats[dateStr].tasks) {
+            const logs = await getTimeLogs(task.id, dateStr, dateStr);
+            dailyStats[dateStr].totalHours += logs.reduce((sum, log) => sum + log.hours, 0);
+          }
+        }
+        
+        // Get todos and accomplishments for the month
+        try {
+          const db = await dbPromise;
+          const allTodos = await db.getAll('todos');
+          const allAccomplishments = await db.getAll('accomplishments');
+          
+          allTodos.forEach(todo => {
+            if (!dailyStats[todo.date]) {
+              dailyStats[todo.date] = { tasks: [], totalHours: 0, todos: 0, accomplishments: 0 };
+            }
+            dailyStats[todo.date].todos++;
+          });
+          
+          allAccomplishments.forEach(acc => {
+            if (!dailyStats[acc.date]) {
+              dailyStats[acc.date] = { tasks: [], totalHours: 0, todos: 0, accomplishments: 0 };
+            }
+            dailyStats[acc.date].accomplishments++;
+          });
+        } catch (err) {
+          console.error('Error loading calendar data:', err);
+        }
+        
+        let table = '<table class="table calendar-table"><thead><tr>';
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => table += `<th>${day}</th>`);
+        table += '</tr></thead><tbody>';
+        
+        for (const week of calendar) {
+          table += '<tr>';
+          for (const day of week) {
+            const dateStr = day ? `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}` : '';
+            const dayStats = dailyStats[dateStr] || { tasks: [], totalHours: 0, todos: 0, accomplishments: 0 };
+            const isToday = dateStr === new Date().toISOString().split('T')[0];
+            
+            table += `<td class="calendar-day ${isToday ? 'today' : ''}" ${dateStr ? `data-date="${dateStr}"` : ''}>`;
+            
+            if (day) {
+              table += `<div class="calendar-day-number">${day}</div>`;
+              
+              // Add day indicators
+              const indicators = [];
+              if (dayStats.tasks.length > 0) {
+                const urgentCount = dayStats.tasks.filter(t => t.urgency === 'High').length;
+                const overdueCount = dayStats.tasks.filter(t => t.dueOn < dateStr && !['Completed', 'Abandoned', 'Archived'].includes(t.status)).length;
+                
+                if (urgentCount > 0) indicators.push(`<span class="day-indicator urgent" title="${urgentCount} urgent task(s)">!</span>`);
+                if (overdueCount > 0) indicators.push(`<span class="day-indicator overdue" title="${overdueCount} overdue task(s)">⚠</span>`);
+                indicators.push(`<span class="day-indicator tasks" title="${dayStats.tasks.length} task(s)">${dayStats.tasks.length}</span>`);
+              }
+              
+              if (dayStats.totalHours > 0) {
+                indicators.push(`<span class="day-indicator hours" title="${dayStats.totalHours.toFixed(1)} hours logged">${dayStats.totalHours.toFixed(1)}h</span>`);
+              }
+              
+              if (dayStats.todos > 0) {
+                indicators.push(`<span class="day-indicator todos" title="${dayStats.todos} todo(s)">✓${dayStats.todos}</span>`);
+              }
+              
+              if (dayStats.accomplishments > 0) {
+                indicators.push(`<span class="day-indicator accomplishments" title="${dayStats.accomplishments} accomplishment(s)">★${dayStats.accomplishments}</span>`);
+              }
+              
+              table += `<div class="calendar-indicators">${indicators.join('')}</div>`;
+              
+              // Add tooltip data
+              if (dayStats.tasks.length > 0 || dayStats.totalHours > 0 || dayStats.todos > 0 || dayStats.accomplishments > 0) {
+                const tooltipData = {
+                  tasks: dayStats.tasks.map(t => ({ title: t.title, status: t.status, urgency: t.urgency })),
+                  hours: dayStats.totalHours,
+                  todos: dayStats.todos,
+                  accomplishments: dayStats.accomplishments
+                };
+                table += `<div class="calendar-tooltip-data" style="display: none;">${JSON.stringify(tooltipData)}</div>`;
+              }
+            }
+            
+            table += '</td>';
+          }
+          table += '</tr>';
+        }
+        table += '</tbody></table>';
+        
+        // Add floating tooltip element
+        table += `
+          <div id="calendar-tooltip" class="calendar-tooltip" style="display: none;">
+            <div class="tooltip-content"></div>
+          </div>
+        `;
+        
+        taskList.innerHTML = calendarHTML + table;
+        
+        // Set the period label
+        const targetMonth = new Date(year, month - 1, 1);
+        const periodLabel = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        document.getElementById('calendarPeriodLabel').textContent = periodLabel;
+        
+        // Initialize calendar tooltips and event handlers
+        initializeCalendarTooltips();
+        initializeCalendarControls();
+      } else if (view === 'all') {
+        let table = `
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="title">Title <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="dueOn">Due Date <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="status">Status <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="urgency">Urgency <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="importance">Importance <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="estimate">Estimate <i class="fas fa-sort"></i></th>
+                <th class="sortable" data-sort="hours">Total Hours <i class="fas fa-sort"></i></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        for (const task of tasks) {
+          const logs = await getTimeLogs(task.id);
+          const taskHours = logs.reduce((sum, log) => sum + log.hours, 0);
+          sessionStorage.setItem(`hours_${task.id}`, taskHours);
+          table += `
+            <tr>
+              <td class="editable" data-field="title" data-task-id="${task.id}">${task.title}</td>
+              <td><input type="date" class="form-control form-control-sm editable" data-field="dueOn" data-task-id="${task.id}" value="${task.dueOn}"></td>
+              <td>
+                <select class="form-select form-select-sm editable" data-field="status" data-task-id="${task.id}">
+                  <option value="Ready" ${task.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                  <option value="Estimated" ${task.status === 'Estimated' ? 'selected' : ''}>Estimated</option>
+                  <option value="InProgress" ${task.status === 'InProgress' ? 'selected' : ''}>InProgress</option>
+                  <option value="Blocked" ${task.status === 'Blocked' ? 'selected' : ''}>Blocked</option>
+                  <option value="OnHold" ${task.status === 'OnHold' ? 'selected' : ''}>OnHold</option>
+                  <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                  <option value="Abandoned" ${task.status === 'Abandoned' ? 'selected' : ''}>Abandoned</option>
+                  <option value="Archived" ${task.status === 'Archived' ? 'selected' : ''}>Archived</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select form-select-sm editable" data-field="urgency" data-task-id="${task.id}">
+                  <option value="Low" ${task.urgency === 'Low' ? 'selected' : ''}>Low</option>
+                  <option value="Med" ${task.urgency === 'Med' ? 'selected' : ''}>Med</option>
+                  <option value="High" ${task.urgency === 'High' ? 'selected' : ''}>High</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select form-select-sm editable" data-field="importance" data-task-id="${task.id}">
+                  <option value="Low" ${task.importance === 'Low' ? 'selected' : ''}>Low</option>
+                  <option value="Med" ${task.importance === 'Med' ? 'selected' : ''}>Med</option>
+                  <option value="High" ${task.importance === 'High' ? 'selected' : ''}>High</option>
+                </select>
+              </td>
+              <td><input type="number" class="form-control form-control-sm editable" data-field="estimate" data-task-id="${task.id}" value="${task.estimate || 0}" min="0" step="0.1"></td>
+              <td>${taskHours.toFixed(1)}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.25" title="15 minutes">15m</button>
+                <button class="btn btn-sm btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.5" title="30 minutes">30m</button>
+                <button class="btn btn-sm btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="1" title="1 hour">1h</button>
+                <button class="btn btn-sm btn-success custom-time-btn" data-task-id="${task.id}" title="Custom time">Time</button>
+                <button class="btn btn-sm btn-outline-danger delete-task-btn" data-task-id="${task.id}" title="Delete task">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+        table += '</tbody></table>';
+        taskList.innerHTML = table;
+      }
+
+      const logs = await Promise.all(tasks.map(task => getTimeLogs(task.id, startDate, endDate)));
+      const totalHours = logs.flat().reduce((sum, log) => sum + log.hours, 0);
+      const { periodLabel } = getDateRange(view);
+      const summary = document.getElementById('summary');
+      
+      if (view === 'board') {
+        // Create spectacular board summary
+        const totalTasks = tasks.length;
+        const backlogTasks = tasks.filter(t => ['Ready', 'Estimated'].includes(t.status)).length;
+        const inProgressTasks = tasks.filter(t => t.status === 'InProgress').length;
+        const blockedTasks = tasks.filter(t => ['Blocked', 'OnHold'].includes(t.status)).length;
+        const completedTasks = tasks.filter(t => t.status === 'Completed').length;
+        const overdueTasks = tasks.filter(t => t.dueOn < new Date().toISOString().split('T')[0]).length;
+        
+        summary.innerHTML = `
+          <div class="row mb-3">
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">Total Tasks</h6>
+                  <h4 class="mb-0">${totalTasks}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">In Progress</h6>
+                  <h4 class="mb-0">${inProgressTasks}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">Blocked</h6>
+                  <h4 class="mb-0">${blockedTasks}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">Completed</h6>
+                  <h4 class="mb-0">${completedTasks}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">Overdue</h6>
+                  <h4 class="mb-0">${overdueTasks}</h4>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="card text-center border-0" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white;">
+                <div class="card-body py-2">
+                  <h6 class="mb-1">Total Hours</h6>
+                  <h4 class="mb-0">${totalHours.toFixed(1)}h</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (view === 'work') {
+        // Work view - task editing interface
+        taskList.innerHTML = `
+          <div class="work-container">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-edit me-2"></i>
+                  Task Workspace
+                </h5>
+              </div>
+              <div class="card-body">
+                <div id="workTaskContent">
+                  <div class="text-center text-muted py-5">
+                    <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                    <h4>Select a task to start working</h4>
+                    <p>Choose a task from the Board or Today view to edit and track time.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        summary.innerHTML = '';
+      } else if (view === 'reports') {
+        // Reports view - comprehensive reporting interface
+        taskList.innerHTML = `
+          <div class="reports-container">
+            <div class="row g-4">
+              <!-- Report Controls -->
+              <div class="col-lg-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-cog me-2"></i>
+                      Report Settings
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <!-- Time Period Selection -->
+                    <div class="mb-3">
+                      <label class="form-label">Time Period</label>
+                      <select class="form-select" id="reportPeriod" onchange="updateReportDates()">
+                        <option value="thisWeek">This Week</option>
+                        <option value="lastWeek">Last Week</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="custom">Custom Range</option>
+                      </select>
+                    </div>
+                    
+                    <!-- Custom Date Range -->
+                    <div id="customDateRange" style="display: none;">
+                      <div class="row g-2 mb-3">
+                        <div class="col">
+                          <label class="form-label small">From</label>
+                          <input type="date" class="form-control" id="reportStartDate">
+                        </div>
+                        <div class="col">
+                          <label class="form-label small">To</label>
+                          <input type="date" class="form-control" id="reportEndDate">
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Report Type Selection -->
+                    <div class="mb-3">
+                      <label class="form-label">Report Type</label>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeTimesheet" checked>
+                        <label class="form-check-label" for="includeTimesheet">
+                          Time Summary
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeAccomplishments" checked>
+                        <label class="form-check-label" for="includeAccomplishments">
+                          Accomplishments
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeTaskProgress" checked>
+                        <label class="form-check-label" for="includeTaskProgress">
+                          Task Progress
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeExecutiveSummary">
+                        <label class="form-check-label" for="includeExecutiveSummary">
+                          Executive Summary
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <!-- Generate Button -->
+                    <button class="btn btn-primary w-100 mb-2" onclick="generateReport()">
+                      <i class="fas fa-chart-line me-2"></i>
+                      Generate Report
+                    </button>
+                    
+                    <!-- Export Button -->
+                    <button class="btn btn-outline-success w-100" onclick="exportReportAsMarkdown()" id="exportReportBtn" disabled>
+                      <i class="fas fa-download me-2"></i>
+                      Export as Markdown
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Report Preview -->
+              <div class="col-lg-8">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-file-alt me-2"></i>
+                      Report Preview
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="reportPreview" class="report-preview">
+                      <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <h4>Ready to Generate Report</h4>
+                        <p>Select your preferences and click "Generate Report" to create your custom report.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        summary.innerHTML = '';
+      } else {
+        summary.innerHTML = `
+          <div class="card summary-card mb-3">
+            <div class="card-body">
+              <h5>Total Hours ${view === 'all' ? '(All Tasks)' : `(${periodLabel})`}</h5>
+              <p>${totalHours.toFixed(1)} hours</p>
+            </div>
+          </div>
+        `;
+      }
+      console.log('Tasks rendered for view:', view);
+    }
+
+    async function exportData() {
+      console.log('Exporting data');
+      try {
+        const db = await dbPromise;
+        const tasks = await db.getAll('tasks');
+        const timeLogs = await db.getAll('timeLogs');
+        const data = { tasks, timeLogs };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'task-time-data.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        console.log('Data exported successfully');
+      } catch (err) {
+        console.error('Error exporting data:', err);
+        alert('Failed to export data: ' + err.message);
+      }
+    }
+
+    async function importData(file) {
+      console.log('Importing data from file');
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const db = await dbPromise;
+          const tx = db.transaction(['tasks', 'timeLogs'], 'readwrite');
+          for (const task of data.tasks) {
+            await tx.objectStore('tasks').put(task);
+          }
+          for (const log of data.timeLogs) {
+            await tx.objectStore('timeLogs').put(log);
+          }
+          await tx.done;
+          console.log('Data imported successfully');
+          renderTasks(document.querySelector('.nav-link.active').id.replace('Tab', ''));
+        } catch (err) {
+          console.error('Error importing data:', err);
+          alert('Error importing data: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Initialize and event listeners
+    console.log('Initializing event listeners');
+
+    // Other Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded at', new Date().toISOString());
+      
+      // Set default due date to today
+      document.getElementById('quickTaskDue').value = new Date().toISOString().split('T')[0];
+      
+      // Initialize spectacular drag and drop
+      initializeDragAndDrop();
+      
+      // Quick Add Form handlers
+      document.getElementById('expandAddBtn').addEventListener('click', () => {
+        const expandedForm = document.getElementById('expandedAddForm');
+        const icon = document.querySelector('#expandAddBtn i');
+        if (expandedForm.style.display === 'none') {
+          expandedForm.style.display = 'block';
+          icon.className = 'fas fa-chevron-up';
+          document.querySelector('#expandAddBtn').innerHTML = '<i class="fas fa-chevron-up"></i> Less Options';
+        } else {
+          expandedForm.style.display = 'none';
+          icon.className = 'fas fa-chevron-down';
+          document.querySelector('#expandAddBtn').innerHTML = '<i class="fas fa-chevron-down"></i> More Options';
+        }
+      });
+      
+      document.getElementById('quickAddBtn').addEventListener('click', async () => {
+        const title = document.getElementById('quickTaskTitle').value.trim();
+        const dueOn = document.getElementById('quickTaskDue').value;
+        
+        if (!title) {
+          alert('Task title is required.');
+          document.getElementById('quickTaskTitle').focus();
+          return;
+        }
+        
+        if (!dueOn) {
+          alert('Due date is required.');
+          document.getElementById('quickTaskDue').focus();
+          return;
+        }
+        
+        const task = {
+          title: title,
+          text: document.getElementById('quickTaskText').value.trim(),
+          dueOn: dueOn,
+          status: document.getElementById('quickTaskStatus').value,
+          urgency: document.getElementById('quickTaskUrgency').value,
+          importance: document.getElementById('quickTaskImportance').value,
+          estimate: parseFloat(document.getElementById('quickTaskEstimate').value) || 0,
+          notes: document.getElementById('quickTaskNotes').value.trim()
+        };
+        
+        const success = await saveTask(task, false);
+        if (success) {
+          // Reset form
+          document.getElementById('quickTaskTitle').value = '';
+          document.getElementById('quickTaskText').value = '';
+          document.getElementById('quickTaskNotes').value = '';
+          document.getElementById('quickTaskDue').value = new Date().toISOString().split('T')[0];
+          document.getElementById('quickTaskStatus').value = 'Ready';
+          document.getElementById('quickTaskUrgency').value = 'Low';
+          document.getElementById('quickTaskImportance').value = 'Low';
+          document.getElementById('quickTaskEstimate').value = '0';
+          
+          // Collapse expanded form
+          document.getElementById('expandedAddForm').style.display = 'none';
+          document.querySelector('#expandAddBtn').innerHTML = '<i class="fas fa-chevron-down"></i> More Options';
+          
+          // Focus back to title for rapid entry
+          document.getElementById('quickTaskTitle').focus();
+          
+          renderTasks(currentView);
+        }
+      });
+      
+      // Allow Enter key to submit quick add
+      document.getElementById('quickTaskTitle').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('quickAddBtn').click();
+        }
+      });
+      
+      renderTasks('today');
+
+      document.getElementById('taskList').addEventListener('click', async (e) => {
+        console.log('Task list clicked:', e.target);
+        
+        // Quick time logging
+        if (e.target.closest('.quick-time-btn')) {
+          const btn = e.target.closest('.quick-time-btn');
+          const taskId = parseInt(btn.dataset.taskId);
+          const hours = parseFloat(btn.dataset.hours);
+          
+          const timeLog = {
+            taskId: taskId,
+            hours: hours,
+            dateLogged: new Date().toISOString().split('T')[0]
+          };
+          
+          if (await saveTimeLog(timeLog)) {
+            renderTasks(currentView);
+          }
+        }
+        
+        // Custom time logging
+        else if (e.target.closest('.custom-time-btn')) {
+          const taskId = e.target.closest('.custom-time-btn').dataset.taskId;
+          const hours = prompt('Enter hours to log:');
+          if (hours && !isNaN(hours) && parseFloat(hours) > 0) {
+            const timeLog = {
+              taskId: parseInt(taskId),
+              hours: parseFloat(hours),
+              dateLogged: new Date().toISOString().split('T')[0]
+            };
+            
+            if (await saveTimeLog(timeLog)) {
+              renderTasks(currentView);
+            }
+          }
+        }
+        
+        // Delete task
+        else if (e.target.closest('.delete-task-btn')) {
+          if (confirm('Delete this task and its time logs?')) {
+            const taskId = parseInt(e.target.closest('.delete-task-btn').dataset.taskId);
+            console.log('Deleting task:', taskId);
+            await deleteTask(taskId);
+            renderTasks(currentView);
+          }
+        }
+        
+        // Work on task
+        else if (e.target.closest('.work-task-btn')) {
+          const taskId = parseInt(e.target.closest('.work-task-btn').dataset.taskId);
+          console.log('Opening work tab for task:', taskId);
+          openWorkTab(taskId);
+        }
+        
+        // Delete time log
+        else if (e.target.closest('.delete-log-btn')) {
+          if (confirm('Delete this time log?')) {
+            const logId = parseInt(e.target.closest('.delete-log-btn').dataset.logId);
+            console.log('Deleting time log:', logId);
+            await deleteTimeLog(logId);
+            renderTasks(currentView);
+          }
+        }
+        
+        // Sortable table headers (All Tasks view)
+        else if (e.target.closest('.sortable')) {
+          const newSortBy = e.target.closest('.sortable').dataset.sort;
+          console.log('Sorting by:', newSortBy);
+          let sortBy = sessionStorage.getItem('sortBy') || 'dueOn';
+          let sortOrder = sessionStorage.getItem('sortOrder') || 'asc';
+          if (newSortBy === sortBy) {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortBy = newSortBy;
+            sortOrder = 'asc';
+          }
+          sessionStorage.setItem('sortBy', sortBy);
+          sessionStorage.setItem('sortOrder', sortOrder);
+          renderTasks('all');
+        }
+      });
+      
+      // Inline editing functionality
+      document.getElementById('taskList').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('editable') && e.target.dataset.field) {
+          const field = e.target.dataset.field;
+          const taskId = parseInt(e.target.dataset.taskId);
+          const currentValue = e.target.textContent || e.target.value;
+          
+          // Create appropriate input based on field type
+          let input;
+          if (field === 'status') {
+            input = document.createElement('select');
+            input.className = 'form-select form-select-sm editing';
+            input.innerHTML = `
+              <option value="Ready">Ready</option>
+              <option value="Estimated">Estimated</option>
+              <option value="InProgress">InProgress</option>
+              <option value="Blocked">Blocked</option>
+              <option value="OnHold">OnHold</option>
+              <option value="Completed">Completed</option>
+              <option value="Abandoned">Abandoned</option>
+              <option value="Archived">Archived</option>
+            `;
+            input.value = currentValue;
+          } else if (field === 'urgency') {
+            input = document.createElement('select');
+            input.className = 'form-select form-select-sm editing';
+            input.innerHTML = `
+              <option value="Low">Low</option>
+              <option value="Med">Med</option>
+              <option value="High">High</option>
+            `;
+            input.value = currentValue;
+          } else if (field === 'importance') {
+            input = document.createElement('select');
+            input.className = 'form-select form-select-sm editing';
+            input.innerHTML = `
+              <option value="Low">Low</option>
+              <option value="Med">Med</option>
+              <option value="High">High</option>
+            `;
+            input.value = currentValue;
+          } else if (field === 'text') {
+            // Skip for textarea, handle differently
+            return;
+          } else if (field === 'dueOn') {
+            // Skip for date input, handle differently
+            return;
+          } else if (field === 'estimate') {
+            // Skip for number input, handle differently
+            return;
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control form-control-sm editing';
+            input.value = currentValue;
+          }
+          
+          if (input) {
+            e.target.style.display = 'none';
+            e.target.parentNode.insertBefore(input, e.target.nextSibling);
+            input.focus();
+            
+            const saveEdit = async () => {
+              const newValue = input.value.trim();
+              if (newValue !== currentValue) {
+                try {
+                  const db = await dbPromise;
+                  const task = await db.get('tasks', taskId);
+                  task[field] = newValue;
+                  await saveTask(task, true);
+                  renderTasks(currentView);
+                } catch (err) {
+                  console.error('Error saving edit:', err);
+                  alert('Failed to save changes: ' + err.message);
+                }
+              } else {
+                e.target.style.display = '';
+                input.remove();
+              }
+            };
+            
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keypress', (event) => {
+              if (event.key === 'Enter') {
+                saveEdit();
+              } else if (event.key === 'Escape') {
+                e.target.style.display = '';
+                input.remove();
+              }
+            });
+          }
+        }
+      });
+      
+      // Double-click editing for board cards
+      document.getElementById('taskList').addEventListener('dblclick', async (e) => {
+        if (e.target.classList.contains('card-title') && e.target.dataset.field) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const field = e.target.dataset.field;
+          const taskId = parseInt(e.target.dataset.taskId);
+          const currentValue = e.target.textContent;
+          
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'form-control form-control-sm';
+          input.value = currentValue;
+          input.style.fontSize = '1rem';
+          input.style.fontWeight = '600';
+          input.style.background = 'white';
+          input.style.border = '2px solid #007bff';
+          
+          e.target.style.display = 'none';
+          e.target.parentNode.insertBefore(input, e.target.nextSibling);
+          input.focus();
+          input.select();
+          
+          const saveEdit = async () => {
+            const newValue = input.value.trim();
+            if (newValue && newValue !== currentValue) {
+              try {
+                const db = await dbPromise;
+                const task = await db.get('tasks', taskId);
+                task[field] = newValue;
+                await saveTask(task, true);
+                renderTasks(currentView);
+              } catch (err) {
+                console.error('Error saving edit:', err);
+                alert('Failed to save changes: ' + err.message);
+                e.target.style.display = '';
+                input.remove();
+              }
+            } else {
+              e.target.style.display = '';
+              input.remove();
+            }
+          };
+          
+          input.addEventListener('blur', saveEdit);
+          input.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+              saveEdit();
+            } else if (event.key === 'Escape') {
+              e.target.style.display = '';
+              input.remove();
+            }
+          });
+        }
+      });
+      
+      // Handle textarea and input changes for expanded form
+      document.getElementById('taskList').addEventListener('change', async (e) => {
+        if (e.target.classList.contains('editable') && e.target.dataset.field) {
+          const field = e.target.dataset.field;
+          const taskId = parseInt(e.target.dataset.taskId);
+          const newValue = e.target.value;
+          
+          try {
+            const db = await dbPromise;
+            const task = await db.get('tasks', taskId);
+            if (field === 'estimate') {
+              task[field] = parseFloat(newValue) || 0;
+            } else {
+              task[field] = newValue;
+            }
+            await saveTask(task, true);
+            // Don't re-render immediately for better UX
+          } catch (err) {
+            console.error('Error saving edit:', err);
+            alert('Failed to save changes: ' + err.message);
+          }
+        }
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', exportData);
+      document.getElementById('importBtn').addEventListener('click', () => {
+        console.log('Import button clicked');
+        document.getElementById('importFile').click();
+      });
+      document.getElementById('importFile').addEventListener('change', (e) => {
+        console.log('Import file selected');
+        importData(e.target.files[0]);
+      });
+      
+      // Tab navigation
+      document.getElementById('boardTab').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Switching to Board view');
+        document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        renderTasks('board');
+      });
+      document.getElementById('monthTab').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Switching to Month view');
+        document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        goToToday(); // Reset to current month when switching to month view
+        renderTasks('month');
+      });
+      document.getElementById('todayTab').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Switching to Today view');
+        document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        renderTasks('today');
+      });
+      document.getElementById('reportsTab').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Switching to Reports view');
+        document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        renderTasks('reports');
+      });
+      document.getElementById('workTab').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Switching to Work view');
+        document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+        e.target.classList.add('active');
+        renderTasks('work');
+      });
+      
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+          return; // Don't interfere with form inputs
+        }
+        if (currentView === 'month') {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            navigatePeriod(-1);
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            navigatePeriod(1);
+          } else if (e.key === 't' || e.key === 'T') {
+            e.preventDefault();
+            goToToday();
+          }
+        }
+      });
+    });
+
+    // === TODAY VIEW FUNCTIONS ===
+    
+    async function loadTodayData() {
+      await loadTodos();
+      await loadAccomplishments();
+      await loadTodayTasks();
+      // Initialize form handlers after content loads
+      setTimeout(initializeTodayFormHandlers, 50);
+    }
+    
+    // TODO SYSTEM - Modern inline forms
+    window.submitTodo = async function() {
+      const input = document.getElementById('todoTitleInput');
+      const title = input.value.trim();
+      if (!title) return;
+      
+      await saveTodo(title, '');
+      input.value = '';
+      input.focus();
+    }
+    
+    window.submitTodoWithDetails = async function() {
+      const titleInput = document.getElementById('todoTitleInput');
+      const detailsTextarea = document.querySelector('#todoDetailsInput textarea');
+      const title = titleInput.value.trim();
+      const content = detailsTextarea.value.trim();
+      
+      if (!title) return;
+      
+      await saveTodo(title, content);
+      titleInput.value = '';
+      detailsTextarea.value = '';
+      cancelTodoDetails();
+      titleInput.focus();
+    }
+    
+    window.cancelTodoDetails = function() {
+      const detailsDiv = document.getElementById('todoDetailsInput');
+      detailsDiv.style.display = 'none';
+      document.querySelector('#todoDetailsInput textarea').value = '';
+    }
+    
+    window.showTodoDetails = function() {
+      const detailsDiv = document.getElementById('todoDetailsInput');
+      detailsDiv.style.display = 'block';
+      document.querySelector('#todoDetailsInput textarea').focus();
+    }
+    
+    async function saveTodo(title, content) {
+      const todo = {
+        title: title,
+        content: content,
+        completed: false,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
+      };
+      
+      try {
+        const db = await dbPromise;
+        await db.add('todos', todo);
+        await loadTodos();
+      } catch (err) {
+        console.error('Error adding todo:', err);
+        alert('Failed to add todo: ' + err.message);
+      }
+    }
+    
+    // Legacy function for compatibility
+    window.addTodo = async function addTodo() {
+      const title = prompt('Todo title:');
+      if (!title) return;
+      
+      const content = prompt('Todo description (optional):') || '';
+      await saveTodo(title.trim(), content.trim());
+    }
+    
+    async function loadTodos() {
+      try {
+        const db = await dbPromise;
+        const today = new Date().toISOString().split('T')[0];
+        const allTodos = await db.getAll('todos');
+        const todayTodos = allTodos.filter(todo => todo.date === today);
+        
+        const todosList = document.getElementById('todos-list');
+        if (!todosList) return;
+        
+        if (todayTodos.length === 0) {
+          todosList.innerHTML = '<p class="text-muted text-center">No todos for today. Add one to get started!</p>';
+          return;
+        }
+        
+        todosList.innerHTML = todayTodos.map(todo => `
+          <div class="todo-item ${todo.completed ? 'completed' : ''}">
+            <input type="checkbox" class="form-check-input todo-checkbox" 
+                   ${todo.completed ? 'checked' : ''} 
+                   onchange="toggleTodo(${todo.id})">
+            <div class="todo-content">
+              <div class="todo-title">${todo.title}</div>
+              ${todo.content ? `<p class="todo-text">${todo.content}</p>` : ''}
+            </div>
+            <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteTodo(${todo.id})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading todos:', err);
+      }
+    }
+    
+    window.toggleTodo = async function toggleTodo(todoId) {
+      try {
+        const db = await dbPromise;
+        const todo = await db.get('todos', todoId);
+        todo.completed = !todo.completed;
+        await db.put('todos', todo);
+        await loadTodos();
+      } catch (err) {
+        console.error('Error toggling todo:', err);
+        alert('Failed to update todo: ' + err.message);
+      }
+    }
+    
+    window.deleteTodo = async function deleteTodo(todoId) {
+      const todoItem = document.querySelector(`[onclick*="deleteTodo(${todoId})"]`).closest('.todo-item');
+      if (!todoItem) return;
+      
+      // Create inline confirmation
+      const originalContent = todoItem.innerHTML;
+      todoItem.innerHTML = `
+        <div class="delete-confirmation">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+              <span>Delete this todo?</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" onclick="cancelDelete(${todoId}, 'todo')">Cancel</button>
+              <button class="btn btn-sm btn-danger" onclick="confirmDeleteTodo(${todoId})">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+      todoItem.classList.add('deleting');
+      
+      // Store original content for cancel
+      todoItem.dataset.originalContent = originalContent;
+    }
+    
+    window.confirmDeleteTodo = async function(todoId) {
+      try {
+        const db = await dbPromise;
+        await db.delete('todos', todoId);
+        await loadTodos();
+      } catch (err) {
+        console.error('Error deleting todo:', err);
+        showErrorToast('Failed to delete todo');
+      }
+    }
+    
+    window.cancelDelete = function(id, type) {
+      const item = document.querySelector(`.${type}-item.deleting`);
+      if (item && item.dataset.originalContent) {
+        item.innerHTML = item.dataset.originalContent;
+        item.classList.remove('deleting');
+        delete item.dataset.originalContent;
+      }
+    }
+    
+    // ACCOMPLISHMENTS SYSTEM - Modern inline forms
+    window.submitAccomplishment = async function() {
+      const input = document.getElementById('accomplishmentTitleInput');
+      const title = input.value.trim();
+      if (!title) return;
+      
+      await saveAccomplishment(title, '');
+      input.value = '';
+      input.focus();
+    }
+    
+    window.submitAccomplishmentWithDetails = async function() {
+      const titleInput = document.getElementById('accomplishmentTitleInput');
+      const detailsTextarea = document.querySelector('#accomplishmentDetailsInput textarea');
+      const title = titleInput.value.trim();
+      const content = detailsTextarea.value.trim();
+      
+      if (!title) return;
+      
+      await saveAccomplishment(title, content);
+      titleInput.value = '';
+      detailsTextarea.value = '';
+      cancelAccomplishmentDetails();
+      titleInput.focus();
+    }
+    
+    window.cancelAccomplishmentDetails = function() {
+      const detailsDiv = document.getElementById('accomplishmentDetailsInput');
+      detailsDiv.style.display = 'none';
+      document.querySelector('#accomplishmentDetailsInput textarea').value = '';
+    }
+    
+    window.showAccomplishmentDetails = function() {
+      const detailsDiv = document.getElementById('accomplishmentDetailsInput');
+      detailsDiv.style.display = 'block';
+      document.querySelector('#accomplishmentDetailsInput textarea').focus();
+    }
+    
+    async function saveAccomplishment(title, content) {
+      const accomplishment = {
+        title: title,
+        content: content,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
+      };
+      
+      try {
+        const db = await dbPromise;
+        await db.add('accomplishments', accomplishment);
+        await loadAccomplishments();
+      } catch (err) {
+        console.error('Error adding accomplishment:', err);
+        alert('Failed to add accomplishment: ' + err.message);
+      }
+    }
+    
+    // Legacy function for compatibility
+    window.addAccomplishment = async function addAccomplishment() {
+      const title = prompt('Accomplishment title:');
+      if (!title) return;
+      
+      const content = prompt('Accomplishment details:') || '';
+      await saveAccomplishment(title.trim(), content.trim());
+    }
+    
+    async function loadAccomplishments() {
+      try {
+        const db = await dbPromise;
+        const today = new Date().toISOString().split('T')[0];
+        const allAccomplishments = await db.getAll('accomplishments');
+        const todayAccomplishments = allAccomplishments.filter(acc => acc.date === today);
+        
+        const accomplishmentsList = document.getElementById('accomplishments-list');
+        if (!accomplishmentsList) return;
+        
+        if (todayAccomplishments.length === 0) {
+          accomplishmentsList.innerHTML = '<p class="text-muted text-center">No accomplishments logged today. Add one to celebrate your wins!</p>';
+          return;
+        }
+        
+        accomplishmentsList.innerHTML = todayAccomplishments.map(acc => `
+          <div class="accomplishment-item">
+            <div class="accomplishment-title">${acc.title}</div>
+            ${acc.content ? `<div class="accomplishment-content">${acc.content}</div>` : ''}
+            <div class="accomplishment-time">
+              ${new Date(acc.createdAt).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+              })}
+              <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAccomplishment(${acc.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading accomplishments:', err);
+      }
+    }
+    
+    window.deleteAccomplishment = async function deleteAccomplishment(accomplishmentId) {
+      const accItem = document.querySelector(`[onclick*="deleteAccomplishment(${accomplishmentId})"]`).closest('.accomplishment-item');
+      if (!accItem) return;
+      
+      // Create inline confirmation
+      const originalContent = accItem.innerHTML;
+      accItem.innerHTML = `
+        <div class="delete-confirmation">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+              <span>Delete this accomplishment?</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" onclick="cancelDelete(${accomplishmentId}, 'accomplishment')">Cancel</button>
+              <button class="btn btn-sm btn-danger" onclick="confirmDeleteAccomplishment(${accomplishmentId})">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+      accItem.classList.add('deleting');
+      
+      // Store original content for cancel
+      accItem.dataset.originalContent = originalContent;
+    }
+    
+    window.confirmDeleteAccomplishment = async function(accomplishmentId) {
+      try {
+        const db = await dbPromise;
+        await db.delete('accomplishments', accomplishmentId);
+        await loadAccomplishments();
+      } catch (err) {
+        console.error('Error deleting accomplishment:', err);
+        showErrorToast('Failed to delete accomplishment');
+      }
+    }
+    
+    // Error toast notification
+    function showErrorToast(message) {
+      // Create toast element
+      const toast = document.createElement('div');
+      toast.className = 'error-toast';
+      toast.innerHTML = `
+        <div class="d-flex align-items-center">
+          <i class="fas fa-exclamation-circle text-danger me-2"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // Add to page
+      document.body.appendChild(toast);
+      
+      // Show with animation
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Remove after delay
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+    
+    // TODAY'S TASKS OVERVIEW - Enhanced with filters
+    let currentTaskFilter = 'today';
+    
+    window.setTaskFilter = function(filter) {
+      currentTaskFilter = filter;
+      
+      // Update button states
+      document.querySelectorAll('.task-overview-filters .btn').forEach(btn => btn.classList.remove('active'));
+      
+      // Map filter values to actual button IDs
+      let buttonId;
+      if (filter === 'today') buttonId = 'filterToday';
+      else if (filter === 'thisWeek') buttonId = 'filterThisWeek';
+      else if (filter === 'nextWeek') buttonId = 'filterNextWeek';
+      
+      const button = document.getElementById(buttonId);
+      if (button) {
+        button.classList.add('active');
+      }
+      
+      // Reload tasks with new filter
+      loadTasksOverview(filter);
+    }
+    
+    async function loadTodayTasks() {
+      await loadTasksOverview('today');
+    }
+    
+    async function loadTasksOverview(filter = 'today') {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tasks = await getTasks({}, false);
+        
+        let startDate, endDate, filteredTasks, hoursLabel;
+        
+        if (filter === 'today') {
+          const todayStr = today.toISOString().split('T')[0];
+          filteredTasks = tasks.filter(task => 
+            task.dueOn === todayStr || (task.dueOn < todayStr && !['Completed', 'Abandoned', 'Archived'].includes(task.status))
+          );
+          startDate = endDate = todayStr;
+          hoursLabel = 'today';
+        } else if (filter === 'thisWeek') {
+          // Get current week (Sunday to Saturday)
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay());
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          
+          const startStr = weekStart.toISOString().split('T')[0];
+          const endStr = weekEnd.toISOString().split('T')[0];
+          
+          filteredTasks = tasks.filter(task => 
+            (task.dueOn >= startStr && task.dueOn <= endStr) && !['Completed', 'Abandoned', 'Archived'].includes(task.status)
+          );
+          startDate = startStr;
+          endDate = endStr;
+          hoursLabel = 'this week';
+        } else if (filter === 'nextWeek') {
+          // Get next week (Sunday to Saturday)
+          const nextWeekStart = new Date(today);
+          nextWeekStart.setDate(today.getDate() - today.getDay() + 7);
+          const nextWeekEnd = new Date(nextWeekStart);
+          nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+          
+          const startStr = nextWeekStart.toISOString().split('T')[0];
+          const endStr = nextWeekEnd.toISOString().split('T')[0];
+          
+          filteredTasks = tasks.filter(task => 
+            (task.dueOn >= startStr && task.dueOn <= endStr) && !['Completed', 'Abandoned', 'Archived'].includes(task.status)
+          );
+          startDate = startStr;
+          endDate = endStr;
+          hoursLabel = 'next week';
+        }
+        
+        // Calculate total hours for the period
+        let totalHours = 0;
+        for (const task of filteredTasks) {
+          const logs = await getTimeLogs(task.id, startDate, endDate);
+          totalHours += logs.reduce((sum, log) => sum + log.hours, 0);
+        }
+        
+        const todayHours = document.getElementById('today-hours');
+        const todayTasksDiv = document.getElementById('today-tasks');
+        
+        if (todayHours) {
+          todayHours.textContent = `${totalHours.toFixed(1)} hours logged ${hoursLabel}`;
+        }
+        
+        if (!todayTasksDiv) return;
+        
+        if (filteredTasks.length === 0) {
+          let emptyMessage = 'No tasks found';
+          if (filter === 'today') emptyMessage = 'No tasks due today. Great job staying on top of things!';
+          else if (filter === 'thisWeek') emptyMessage = 'No tasks due this week. You\'re all caught up!';
+          else if (filter === 'nextWeek') emptyMessage = 'No tasks scheduled for next week yet.';
+          
+          todayTasksDiv.innerHTML = `<p class="text-muted text-center">${emptyMessage}</p>`;
+          return;
+        }
+        
+        const todayStr = today.toISOString().split('T')[0];
+        todayTasksDiv.innerHTML = filteredTasks.map(task => {
+          const isOverdue = task.dueOn < todayStr;
+          const isToday = task.dueOn === todayStr;
+          return `
+            <div class="today-task-item ${isOverdue ? 'overdue' : ''} ${isToday ? 'due-today' : ''}">
+              <div class="today-task-urgency ${task.urgency.toLowerCase()}"></div>
+              <div class="flex-grow-1">
+                <strong>${task.title}</strong>
+                <span class="badge bg-secondary ms-2">${task.status}</span>
+                ${isOverdue ? '<span class="badge bg-danger ms-1">OVERDUE</span>' : ''}
+                ${isToday ? '<span class="badge bg-warning ms-1">TODAY</span>' : ''}
+              </div>
+              <div class="text-muted d-flex flex-column text-end">
+                <small>Due: ${new Date(task.dueOn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</small>
+                <small>${task.estimate ? `Est: ${task.estimate}h` : 'No estimate'}</small>
+              </div>
+              <div class="ms-2">
+                <button class="btn btn-sm btn-outline-info work-task-btn" data-task-id="${task.id}" title="Work on task">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error loading task overview:', err);
+      }
+    }
+    
+    // WORK TAB FUNCTIONS
+    window.openWorkTab = async function(taskId) {
+      console.log('openWorkTab called with taskId:', taskId);
+      // Switch to work tab
+      document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('workTab').classList.add('active');
+      document.getElementById('workTab').style.display = 'block';
+      
+      // Load task data and render work interface
+      try {
+        const db = await dbPromise;
+        const task = await db.get('tasks', taskId);
+        console.log('Task loaded from DB:', task);
+        if (task) {
+          // First ensure the work view container exists
+          console.log('Calling renderTasks(work)');
+          await renderTasks('work');
+          // Wait a moment for DOM to update, then populate it with the specific task
+          setTimeout(async () => {
+            console.log('Calling renderWorkInterface after timeout');
+            await renderWorkInterface(task);
+          }, 100);
+        } else {
+          console.error('Task not found with ID:', taskId);
+        }
+      } catch (err) {
+        console.error('Error loading task for work:', err);
+      }
+    }
+    
+    async function renderWorkInterface(task) {
+      console.log('renderWorkInterface called with task:', task);
+      const workContent = document.getElementById('workTaskContent');
+      console.log('workTaskContent element found:', workContent);
+      if (!workContent) {
+        console.error('workTaskContent element not found!');
+        return;
+      }
+      
+      // Get time logs for this task
+      const logs = await getTimeLogs(task.id);
+      const totalHours = logs.reduce((sum, log) => sum + log.hours, 0);
+      console.log('Rendering work interface for task:', task.title);
+      console.log('Task status history:', task.statusHistory);
+      
+      workContent.innerHTML = `
+        <div class="work-task-header mb-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h4 class="mb-1">${task.title}</h4>
+              <div class="text-muted">
+                <span class="badge bg-secondary me-2">${task.status}</span>
+                <span class="badge bg-${task.urgency === 'High' ? 'danger' : task.urgency === 'Med' ? 'warning' : 'success'} me-2">${task.urgency}</span>
+                <span class="badge bg-info">${task.importance}</span>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="h5 mb-1">${totalHours.toFixed(1)}h logged</div>
+              <div class="text-muted">${task.estimate ? `of ${task.estimate}h estimated` : 'No estimate'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row g-4">
+          <!-- Task Details Form -->
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tasks me-2"></i>Task Details</h6>
+              </div>
+              <div class="card-body">
+                <form id="workTaskForm">
+                  <input type="hidden" id="workTaskId" value="${task.id}">
+                  
+                  <div class="mb-3">
+                    <label for="workTaskTitle" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="workTaskTitle" value="${task.title}" required>
+                  </div>
+                  
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label for="workTaskDueDate" class="form-label">Due Date</label>
+                      <input type="date" class="form-control" id="workTaskDueDate" value="${task.dueOn}">
+                    </div>
+                    <div class="col-md-6">
+                      <label for="workTaskEstimate" class="form-label">Estimate (hours)</label>
+                      <input type="number" class="form-control" id="workTaskEstimate" step="0.25" min="0" value="${task.estimate || ''}">
+                    </div>
+                  </div>
+                  
+                  <div class="row mb-3">
+                    <div class="col-md-4">
+                      <label for="workTaskStatus" class="form-label">Status</label>
+                      <select class="form-select" id="workTaskStatus">
+                        <option value="Ready" ${task.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                        <option value="Estimated" ${task.status === 'Estimated' ? 'selected' : ''}>Estimated</option>
+                        <option value="InProgress" ${task.status === 'InProgress' ? 'selected' : ''}>In Progress</option>
+                        <option value="Blocked" ${task.status === 'Blocked' ? 'selected' : ''}>Blocked</option>
+                        <option value="OnHold" ${task.status === 'OnHold' ? 'selected' : ''}>On Hold</option>
+                        <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        <option value="Abandoned" ${task.status === 'Abandoned' ? 'selected' : ''}>Abandoned</option>
+                        <option value="Archived" ${task.status === 'Archived' ? 'selected' : ''}>Archived</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="workTaskUrgency" class="form-label">Urgency</label>
+                      <select class="form-select" id="workTaskUrgency">
+                        <option value="Low" ${task.urgency === 'Low' ? 'selected' : ''}>Low</option>
+                        <option value="Med" ${task.urgency === 'Med' ? 'selected' : ''}>Medium</option>
+                        <option value="High" ${task.urgency === 'High' ? 'selected' : ''}>High</option>
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="workTaskImportance" class="form-label">Importance</label>
+                      <select class="form-select" id="workTaskImportance">
+                        <option value="Low" ${task.importance === 'Low' ? 'selected' : ''}>Low</option>
+                        <option value="Med" ${task.importance === 'Med' ? 'selected' : ''}>Medium</option>
+                        <option value="High" ${task.importance === 'High' ? 'selected' : ''}>High</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label for="workTaskDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="workTaskDescription" rows="4">${task.description || ''}</textarea>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label for="workTaskNotes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="workTaskNotes" rows="6" placeholder="Add detailed notes, progress updates, reminders...">${task.notes || ''}</textarea>
+                    <div class="form-text">Use this space for detailed notes, progress updates, links, or any other information related to this task.</div>
+                  </div>
+                  
+                  <!-- Personal Velocity Estimation -->
+                  <div class="mb-3">
+                    <label class="form-label">
+                      <i class="fas fa-chart-line me-2"></i>Personal Scale Estimation
+                    </label>
+                    <div class="estimation-panel p-3 border rounded bg-light">
+                      <!-- Scale Estimates -->
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                          <label for="estimateLow" class="form-label small">Low Estimate</label>
+                          <input type="range" class="form-range" id="estimateLow" min="1" max="10" step="1" value="${task.estimationData?.scale?.low || 3}">
+                          <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <span class="fw-bold" id="estimateLowValue">${task.estimationData?.scale?.low || 3}</span>
+                            <small class="text-muted">10</small>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <label for="estimateExpected" class="form-label small">Expected Estimate</label>
+                          <input type="range" class="form-range" id="estimateExpected" min="1" max="10" step="1" value="${task.estimationData?.scale?.expected || 5}">
+                          <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <span class="fw-bold" id="estimateExpectedValue">${task.estimationData?.scale?.expected || 5}</span>
+                            <small class="text-muted">10</small>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <label for="estimateHigh" class="form-label small">High Estimate</label>
+                          <input type="range" class="form-range" id="estimateHigh" min="1" max="10" step="1" value="${task.estimationData?.scale?.high || 7}">
+                          <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <span class="fw-bold" id="estimateHighValue">${task.estimationData?.scale?.high || 7}</span>
+                            <small class="text-muted">10</small>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Confidence Level -->
+                      <div class="mb-3">
+                        <label for="estimateConfidence" class="form-label small">Confidence Level</label>
+                        <input type="range" class="form-range" id="estimateConfidence" min="0" max="100" step="1" value="${task.estimationData?.confidence || 100}">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <small class="text-muted">0%</small>
+                          <div class="text-center">
+                            <span class="fw-bold" id="estimateConfidenceValue">${task.estimationData?.confidence || 100}%</span>
+                            <div class="small text-muted" id="confidenceHint">Very confident</div>
+                          </div>
+                          <small class="text-muted">100%</small>
+                        </div>
+                      </div>
+                      
+                      <!-- Velocity Prediction -->
+                      <div class="mt-3 p-2 bg-white rounded border">
+                        <h6 class="small mb-2"><i class="fas fa-clock me-1"></i>Hour Prediction</h6>
+                        <div id="velocityPrediction" class="small">
+                          <div class="text-muted">Complete more tasks to enable predictions</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="cancelWorkEdit()">
+                      <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Time Logging Panel -->
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Time Tracking</h6>
+              </div>
+              <div class="card-body">
+                <!-- Quick Time Buttons -->
+                <div class="mb-3">
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.25">
+                      <i class="fas fa-plus me-2"></i>+15 minutes
+                    </button>
+                    <button class="btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="0.5">
+                      <i class="fas fa-plus me-2"></i>+30 minutes
+                    </button>
+                    <button class="btn btn-outline-success quick-time-btn" data-task-id="${task.id}" data-hours="1">
+                      <i class="fas fa-plus me-2"></i>+1 hour
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Custom Time Entry -->
+                <div class="mb-3">
+                  <h6>Custom Time Entry</h6>
+                  <div class="row g-2 mb-2">
+                    <div class="col">
+                      <input type="number" class="form-control" id="customHours" step="0.25" min="0" max="24" placeholder="Hours">
+                    </div>
+                    <div class="col-auto">
+                      <button class="btn btn-primary" onclick="logCustomTime(${task.id})">
+                        <i class="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Date Selection Toggle -->
+                  <div class="mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="customDateToggle" onchange="toggleCustomDate()">
+                      <label class="form-check-label text-muted small" for="customDateToggle">
+                        Different date?
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Custom Date Picker (Hidden by default) -->
+                  <div id="customDateContainer" style="display: none;" class="mb-2">
+                    <input type="date" class="form-control form-control-sm" id="customDate" value="${new Date().toISOString().split('T')[0]}">
+                    <div class="form-text">Select the date when this time was actually worked</div>
+                  </div>
+                </div>
+                
+                <!-- Time Logs -->
+                <div class="mt-3">
+                  <h6>Recent Time Logs</h6>
+                  <div id="workTimeLogs" class="time-logs-list">
+                    ${logs.slice(-5).reverse().map(log => `
+                      <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                          <div class="fw-bold">${log.hours}h</div>
+                          <small class="text-muted">${new Date(log.dateLogged).toLocaleDateString()}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger delete-log-btn" data-log-id="${log.id}">
+                          <i class="fas fa-trash fa-sm"></i>
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Status History Panel -->
+            <div class="card mt-3">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Status History</h6>
+              </div>
+              <div class="card-body">
+                <div id="workStatusHistory" class="status-history-container" style="max-height: 400px; overflow-y: auto;">
+                  ${renderStatusHistory(task.statusHistory || [])}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add form submit handler
+      document.getElementById('workTaskForm').addEventListener('submit', handleWorkFormSubmit);
+      
+      // Add estimation slider event handlers
+      setupEstimationSliders();
+      
+      // Initialize velocity prediction display
+      updateVelocityPrediction();
+    }
+    
+    function setupEstimationSliders() {
+      const lowSlider = document.getElementById('estimateLow');
+      const expectedSlider = document.getElementById('estimateExpected');
+      const highSlider = document.getElementById('estimateHigh');
+      const confidenceSlider = document.getElementById('estimateConfidence');
+      
+      const lowValue = document.getElementById('estimateLowValue');
+      const expectedValue = document.getElementById('estimateExpectedValue');
+      const highValue = document.getElementById('estimateHighValue');
+      const confidenceValue = document.getElementById('estimateConfidenceValue');
+      const confidenceHint = document.getElementById('confidenceHint');
+      
+      // Update display values and validate
+      function updateSliderValues() {
+        const low = parseInt(lowSlider.value);
+        const expected = parseInt(expectedSlider.value);
+        const high = parseInt(highSlider.value);
+        const confidence = parseInt(confidenceSlider.value);
+        
+        // Update display values
+        lowValue.textContent = low;
+        expectedValue.textContent = expected;
+        highValue.textContent = high;
+        confidenceValue.textContent = confidence + '%';
+        
+        // Validate and adjust ranges
+        if (low > expected) {
+          expectedSlider.value = low;
+          expectedValue.textContent = low;
+        }
+        if (expected > high) {
+          highSlider.value = expected;
+          highValue.textContent = expected;
+        }
+        if (expected < low) {
+          lowSlider.value = expected;
+          lowValue.textContent = expected;
+        }
+        
+        // Update confidence hint
+        if (confidence >= 90) {
+          confidenceHint.textContent = "Very confident - I've done this before";
+        } else if (confidence >= 70) {
+          confidenceHint.textContent = "Confident - Similar work, know the scope";
+        } else if (confidence >= 50) {
+          confidenceHint.textContent = "Moderate - Reasonable guess, some unknowns";
+        } else if (confidence >= 30) {
+          confidenceHint.textContent = "Low - Lots of uncertainty, rough estimate";
+        } else {
+          confidenceHint.textContent = "Very low - Total guess, could be way off";
+        }
+        
+        // Update velocity prediction
+        updateVelocityPrediction();
+      }
+      
+      // Add event listeners
+      lowSlider.addEventListener('input', updateSliderValues);
+      expectedSlider.addEventListener('input', updateSliderValues);
+      highSlider.addEventListener('input', updateSliderValues);
+      confidenceSlider.addEventListener('input', updateSliderValues);
+      
+      // Initial setup
+      updateSliderValues();
+    }
+    
+    async function calculatePersonalVelocity() {
+      try {
+        const db = await dbPromise;
+        const allTasks = await db.getAll('tasks');
+        
+        const completedTasks = allTasks.filter(task => 
+          task.status === 'Completed' && 
+          task.estimationData?.scale?.expected &&
+          task.estimationData.scale.expected > 0
+        );
+        
+        if (completedTasks.length === 0) {
+          return null;
+        }
+        
+        let totalScalePoints = 0;
+        let totalActualHours = 0;
+        
+        for (const task of completedTasks) {
+          // Get actual hours for this task
+          const timeLogs = await getTimeLogs(task.id);
+          const actualHours = timeLogs.reduce((sum, log) => sum + log.hours, 0);
+          
+          if (actualHours > 0) {
+            totalScalePoints += task.estimationData.scale.expected;
+            totalActualHours += actualHours;
+          }
+        }
+        
+        if (totalScalePoints === 0) {
+          return null;
+        }
+        
+        return {
+          velocity: totalActualHours / totalScalePoints,
+          sampleSize: completedTasks.length,
+          totalHours: totalActualHours,
+          totalPoints: totalScalePoints
+        };
+      } catch (err) {
+        console.error('Error calculating velocity:', err);
+        return null;
+      }
+    }
+    
+    async function updateVelocityPrediction() {
+      const predictionDiv = document.getElementById('velocityPrediction');
+      if (!predictionDiv) return;
+      
+      const velocityData = await calculatePersonalVelocity();
+      
+      if (!velocityData) {
+        predictionDiv.innerHTML = `
+          <div class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Complete more tasks with estimation data to enable predictions
+          </div>
+        `;
+        return;
+      }
+      
+      const lowSlider = document.getElementById('estimateLow');
+      const expectedSlider = document.getElementById('estimateExpected');
+      const highSlider = document.getElementById('estimateHigh');
+      
+      if (!lowSlider || !expectedSlider || !highSlider) return;
+      
+      const low = parseInt(lowSlider.value);
+      const expected = parseInt(expectedSlider.value);
+      const high = parseInt(highSlider.value);
+      
+      const predictedLow = (low * velocityData.velocity).toFixed(1);
+      const predictedExpected = (expected * velocityData.velocity).toFixed(1);
+      const predictedHigh = (high * velocityData.velocity).toFixed(1);
+      
+      predictionDiv.innerHTML = `
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div class="small text-muted">Low</div>
+            <div class="fw-bold text-success">${predictedLow}h</div>
+          </div>
+          <div class="col-4">
+            <div class="small text-muted">Expected</div>
+            <div class="fw-bold text-primary">${predictedExpected}h</div>
+          </div>
+          <div class="col-4">
+            <div class="small text-muted">High</div>
+            <div class="fw-bold text-warning">${predictedHigh}h</div>
+          </div>
+        </div>
+        <div class="text-center mt-2">
+          <small class="text-muted">
+            Based on ${velocityData.sampleSize} completed tasks 
+            (${velocityData.velocity.toFixed(2)}h per scale point)
+          </small>
+        </div>
+      `;
+    }
+    
+    async function handleWorkFormSubmit(e) {
+      e.preventDefault();
+      
+      const taskId = parseInt(document.getElementById('workTaskId').value);
+      
+      // First get the current task to preserve all existing properties
+      const db = await dbPromise;
+      const currentTask = await db.get('tasks', taskId);
+      
+      if (!currentTask) {
+        alert('Task not found');
+        return;
+      }
+      
+      // Update only the form fields, preserving everything else
+      const updatedTask = {
+        ...currentTask, // Start with the complete current task
+        title: document.getElementById('workTaskTitle').value.trim(),
+        dueOn: document.getElementById('workTaskDueDate').value,
+        estimate: parseFloat(document.getElementById('workTaskEstimate').value) || null,
+        status: document.getElementById('workTaskStatus').value,
+        urgency: document.getElementById('workTaskUrgency').value,
+        importance: document.getElementById('workTaskImportance').value,
+        description: document.getElementById('workTaskDescription').value.trim(),
+        notes: document.getElementById('workTaskNotes').value.trim(),
+        estimationData: {
+          scale: {
+            low: parseInt(document.getElementById('estimateLow').value),
+            expected: parseInt(document.getElementById('estimateExpected').value),
+            high: parseInt(document.getElementById('estimateHigh').value)
+          },
+          confidence: parseInt(document.getElementById('estimateConfidence').value),
+          estimatedAt: new Date().toISOString()
+        }
+      };
+      
+      console.log('Submitting updated task:', updatedTask);
+      console.log('Current task statusHistory:', currentTask.statusHistory);
+      
+      if (await saveTask(updatedTask, true)) { // Make sure we pass isEdit = true
+        console.log('Task updated successfully');
+        // Refresh the work interface with updated data
+        const refreshedTask = await db.get('tasks', taskId);
+        if (refreshedTask) {
+          await renderWorkInterface(refreshedTask);
+        }
+      }
+    }
+    
+    function renderStatusHistory(statusHistory) {
+      console.log('renderStatusHistory called with:', statusHistory);
+      
+      if (!statusHistory || statusHistory.length === 0) {
+        return '<div class="text-muted text-center py-3">No status history available</div>';
+      }
+      
+      console.log('Rendering', statusHistory.length, 'status history entries');
+      
+      return statusHistory.slice().reverse().map((entry, index) => {
+        const date = new Date(entry.timestamp);
+        const isRecent = index === 0;
+        
+        console.log('Rendering entry:', entry);
+        
+        return `
+          <div class="status-history-entry d-flex align-items-start mb-3 ${isRecent ? 'recent-status' : ''}">
+            <div class="status-timeline-dot me-3 flex-shrink-0" style="margin-top: 6px;">
+              <div class="rounded-circle ${isRecent ? 'bg-primary' : 'bg-secondary'}" style="width: 10px; height: 10px;"></div>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+              <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 min-width-0">
+                  <span class="badge bg-${getStatusColor(entry.status)} flex-shrink-0">${entry.status}</span>
+                  <small class="text-muted text-truncate">${entry.note || ''}</small>
+                </div>
+                <small class="text-muted flex-shrink-0" style="font-size: 0.75rem;">
+                  ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </small>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function getStatusColor(status) {
+      const colors = {
+        'Ready': 'secondary',
+        'Estimated': 'info', 
+        'InProgress': 'primary',
+        'Blocked': 'danger',
+        'OnHold': 'warning',
+        'Completed': 'success',
+        'Abandoned': 'dark',
+        'Archived': 'light'
+      };
+      return colors[status] || 'secondary';
+    }
+    
+    function cancelWorkEdit() {
+      // Switch back to previous view or Today
+      document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('todayTab').classList.add('active');
+      document.getElementById('workTab').style.display = 'none';
+      renderTasks('today');
+    }
+    
+    window.toggleCustomDate = function() {
+      const toggle = document.getElementById('customDateToggle');
+      const container = document.getElementById('customDateContainer');
+      
+      if (toggle.checked) {
+        container.style.display = 'block';
+        // Set to today by default when opening
+        document.getElementById('customDate').value = new Date().toISOString().split('T')[0];
+      } else {
+        container.style.display = 'none';
+      }
+    }
+    
+    window.logCustomTime = async function(taskId) {
+      const hours = parseFloat(document.getElementById('customHours').value);
+      if (!hours || hours <= 0) {
+        alert('Please enter a valid number of hours');
+        return;
+      }
+      
+      // Check if custom date is selected
+      const useCustomDate = document.getElementById('customDateToggle').checked;
+      let logDate;
+      
+      if (useCustomDate) {
+        logDate = document.getElementById('customDate').value;
+        if (!logDate) {
+          alert('Please select a date');
+          return;
+        }
+      } else {
+        logDate = new Date().toISOString().split('T')[0];
+      }
+      
+      const timeLog = {
+        taskId: taskId,
+        dateLogged: logDate,
+        hours: hours
+      };
+      
+      if (await saveTimeLog(timeLog)) {
+        document.getElementById('customHours').value = '';
+        
+        // Reset date picker if it was used
+        if (useCustomDate) {
+          document.getElementById('customDateToggle').checked = false;
+          document.getElementById('customDateContainer').style.display = 'none';
+        }
+        
+        // Refresh the work interface
+        const db = await dbPromise;
+        const task = await db.get('tasks', taskId);
+        if (task) {
+          await renderWorkInterface(task);
+        }
+      }
+    }
+    
+    // Enhanced keyboard and UX handlers for Today view
+    function initializeTodayFormHandlers() {
+      // Todo input handlers
+      const todoInput = document.getElementById('todoTitleInput');
+      if (todoInput) {
+        todoInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            if (e.shiftKey) {
+              showTodoDetails();
+            } else {
+              submitTodo();
+            }
+          }
+        });
+        
+        // Auto-focus on load
+        setTimeout(() => todoInput.focus(), 100);
+      }
+      
+      // Accomplishment input handlers  
+      const accInput = document.getElementById('accomplishmentTitleInput');
+      if (accInput) {
+        accInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            if (e.shiftKey) {
+              showAccomplishmentDetails();
+            } else {
+              submitAccomplishment();
+            }
+          }
+        });
+      }
+      
+      // Details textarea handlers
+      const todoTextarea = document.querySelector('#todoDetailsInput textarea');
+      if (todoTextarea) {
+        todoTextarea.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && e.ctrlKey) {
+            submitTodoWithDetails();
+          }
+        });
+      }
+      
+      const accTextarea = document.querySelector('#accomplishmentDetailsInput textarea');
+      if (accTextarea) {
+        accTextarea.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && e.ctrlKey) {
+            submitAccomplishmentWithDetails();
+          }
+        });
+      }
+      
+      // Make + buttons show details on click
+      const todoBtn = document.querySelector('.todo-form .btn-primary');
+      if (todoBtn) {
+        todoBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('todoTitleInput');
+          if (input.value.trim()) {
+            submitTodo();
+          } else {
+            showTodoDetails();
+          }
+        });
+      }
+      
+      const accBtn = document.querySelector('.accomplishment-form .btn-success');
+      if (accBtn) {
+        accBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('accomplishmentTitleInput');
+          if (input.value.trim()) {
+            submitAccomplishment();
+          } else {
+            showAccomplishmentDetails();
+          }
+        });
+      }
+    }
+    
+    // CALENDAR TOOLTIP SYSTEM
+    function initializeCalendarTooltips() {
+      const calendarDays = document.querySelectorAll('.calendar-day[data-date]');
+      const tooltip = document.getElementById('calendar-tooltip');
+      let tooltipTimeout;
+      
+      calendarDays.forEach(day => {
+        day.addEventListener('mouseenter', (e) => {
+          const tooltipData = day.querySelector('.calendar-tooltip-data');
+          if (!tooltipData) return;
+          
+          // Clear any existing timeout
+          clearTimeout(tooltipTimeout);
+          
+          // Set tooltip delay
+          tooltipTimeout = setTimeout(() => {
+            const data = JSON.parse(tooltipData.textContent);
+            const date = day.dataset.date;
+            const formattedDate = new Date(date).toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long', 
+              day: 'numeric'
+            });
+            
+            let content = `<h6>${formattedDate}</h6>`;
+            
+            if (data.tasks.length > 0) {
+              content += `<div class="tooltip-section">`;
+              content += `<div class="tooltip-label">Tasks (${data.tasks.length}):</div>`;
+              data.tasks.forEach(task => {
+                const urgencyClass = `urgency-${task.urgency.toLowerCase()}`;
+                content += `<div class="task-item"><span class="${urgencyClass}">•</span> ${task.title} <small>(${task.status})</small></div>`;
+              });
+              content += `</div>`;
+            }
+            
+            if (data.hours > 0) {
+              content += `<div class="tooltip-section">`;
+              content += `<div class="tooltip-label">Time Logged: ${data.hours.toFixed(1)} hours</div>`;
+              content += `</div>`;
+            }
+            
+            if (data.todos > 0) {
+              content += `<div class="tooltip-section">`;
+              content += `<div class="tooltip-label">Todos: ${data.todos}</div>`;
+              content += `</div>`;
+            }
+            
+            if (data.accomplishments > 0) {
+              content += `<div class="tooltip-section">`;
+              content += `<div class="tooltip-label">Accomplishments: ${data.accomplishments}</div>`;
+              content += `</div>`;
+            }
+            
+            tooltip.querySelector('.tooltip-content').innerHTML = content;
+            
+            // Position tooltip
+            const rect = day.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+            let top = rect.top - tooltipRect.height - 10;
+            
+            // Keep tooltip on screen
+            if (left < 10) left = 10;
+            if (left + tooltipRect.width > window.innerWidth - 10) {
+              left = window.innerWidth - tooltipRect.width - 10;
+            }
+            if (top < 10) {
+              top = rect.bottom + 10;
+            }
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.add('show');
+          }, 1200); // 1.2 second delay
+        });
+        
+        day.addEventListener('mouseleave', () => {
+          clearTimeout(tooltipTimeout);
+          tooltip.classList.remove('show');
+        });
+      });
+    }
+    
+    // CALENDAR CONTROLS INITIALIZATION
+    function initializeCalendarControls() {
+      // Navigation event handlers
+      document.getElementById('calendarPrevMonth').addEventListener('click', () => {
+        monthOffset -= 1;
+        renderTasks('month');
+      });
+      
+      document.getElementById('calendarNextMonth').addEventListener('click', () => {
+        monthOffset += 1;
+        renderTasks('month');
+      });
+      
+      document.getElementById('calendarTodayButton').addEventListener('click', () => {
+        monthOffset = 0;
+        renderTasks('month');
+      });
+      
+      // Filter event handlers
+      document.getElementById('calendarStatusFilter').addEventListener('change', () => {
+        renderTasks('month');
+      });
+      
+      document.getElementById('calendarUrgencyFilter').addEventListener('change', () => {
+        renderTasks('month');
+      });
+    }
+    
+    // REPORTS SYSTEM
+    let currentReportData = null;
+    
+    window.updateReportDates = function() {
+      const period = document.getElementById('reportPeriod').value;
+      const customRange = document.getElementById('customDateRange');
+      const startDate = document.getElementById('reportStartDate');
+      const endDate = document.getElementById('reportEndDate');
+      
+      if (period === 'custom') {
+        customRange.style.display = 'block';
+        if (!startDate.value) {
+          startDate.value = new Date().toISOString().split('T')[0];
+        }
+        if (!endDate.value) {
+          endDate.value = new Date().toISOString().split('T')[0];
+        }
+      } else {
+        customRange.style.display = 'none';
+      }
+    }
+    
+    window.generateReport = async function() {
+      const period = document.getElementById('reportPeriod').value;
+      const includeTimesheet = document.getElementById('includeTimesheet').checked;
+      const includeAccomplishments = document.getElementById('includeAccomplishments').checked;
+      const includeTaskProgress = document.getElementById('includeTaskProgress').checked;
+      const includeExecutiveSummary = document.getElementById('includeExecutiveSummary').checked;
+      
+      // Calculate date range
+      let startDate, endDate, periodLabel;
+      const today = new Date();
+      
+      switch (period) {
+        case 'thisWeek':
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay());
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          startDate = startOfWeek.toISOString().split('T')[0];
+          endDate = endOfWeek.toISOString().split('T')[0];
+          periodLabel = 'This Week';
+          break;
+        case 'lastWeek':
+          const lastWeekStart = new Date(today);
+          lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
+          const lastWeekEnd = new Date(lastWeekStart);
+          lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
+          startDate = lastWeekStart.toISOString().split('T')[0];
+          endDate = lastWeekEnd.toISOString().split('T')[0];
+          periodLabel = 'Last Week';
+          break;
+        case 'thisMonth':
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+          startDate = startOfMonth.toISOString().split('T')[0];
+          endDate = endOfMonth.toISOString().split('T')[0];
+          periodLabel = 'This Month';
+          break;
+        case 'lastMonth':
+          const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+          startDate = lastMonthStart.toISOString().split('T')[0];
+          endDate = lastMonthEnd.toISOString().split('T')[0];
+          periodLabel = 'Last Month';
+          break;
+        case 'custom':
+          startDate = document.getElementById('reportStartDate').value;
+          endDate = document.getElementById('reportEndDate').value;
+          periodLabel = `${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`;
+          break;
+      }
+      
+      try {
+        // Generate report data
+        const reportData = await generateReportData(startDate, endDate, periodLabel, {
+          includeTimesheet,
+          includeAccomplishments, 
+          includeTaskProgress,
+          includeExecutiveSummary
+        });
+        
+        currentReportData = reportData;
+        
+        // Render report preview
+        const preview = document.getElementById('reportPreview');
+        preview.innerHTML = generateReportHTML(reportData);
+        
+        // Enable export button
+        document.getElementById('exportReportBtn').disabled = false;
+        
+      } catch (err) {
+        console.error('Error generating report:', err);
+        alert('Error generating report: ' + err.message);
+      }
+    }
+    
+    async function generateReportData(startDate, endDate, periodLabel, options) {
+      const db = await dbPromise;
+      
+      // Get all data
+      const allTasks = await db.getAll('tasks');
+      const allTimeLogs = await db.getAll('timeLogs');
+      const allTodos = await db.getAll('todos');
+      const allAccomplishments = await db.getAll('accomplishments');
+      
+      // Filter time logs by date range
+      const timeLogs = allTimeLogs.filter(log => 
+        log.dateLogged >= startDate && log.dateLogged <= endDate
+      );
+      
+      // Filter todos and accomplishments by date range
+      const todos = allTodos.filter(todo => 
+        todo.date >= startDate && todo.date <= endDate
+      );
+      
+      const accomplishments = allAccomplishments.filter(acc => 
+        acc.date >= startDate && acc.date <= endDate
+      );
+      
+      // Calculate time summary
+      const timeByTask = {};
+      let totalHours = 0;
+      
+      for (const log of timeLogs) {
+        if (!timeByTask[log.taskId]) {
+          const task = allTasks.find(t => t.id === log.taskId);
+          timeByTask[log.taskId] = {
+            task: task,
+            hours: 0,
+            logs: []
+          };
+        }
+        timeByTask[log.taskId].hours += log.hours;
+        timeByTask[log.taskId].logs.push(log);
+        totalHours += log.hours;
+      }
+      
+      // Tasks completed - now using status history for precise completion dates
+      const completedTasks = [];
+      const tasksCompletedInPeriod = [];
+      
+      for (const task of allTasks) {
+        if (task.status === 'Completed') {
+          completedTasks.push(task);
+          
+          // Check if completed within the period using status history
+          if (task.statusHistory) {
+            const completionEntry = task.statusHistory.find(entry => entry.status === 'Completed');
+            if (completionEntry) {
+              const completionDate = completionEntry.timestamp.split('T')[0];
+              if (completionDate >= startDate && completionDate <= endDate) {
+                tasksCompletedInPeriod.push({
+                  ...task,
+                  completedAt: completionEntry.timestamp
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      // Tasks abandoned in period
+      const tasksAbandonedInPeriod = [];
+      for (const task of allTasks) {
+        if (task.status === 'Abandoned' && task.statusHistory) {
+          const abandonedEntry = task.statusHistory.find(entry => entry.status === 'Abandoned');
+          if (abandonedEntry) {
+            const abandonedDate = abandonedEntry.timestamp.split('T')[0];
+            if (abandonedDate >= startDate && abandonedDate <= endDate) {
+              tasksAbandonedInPeriod.push({
+                ...task,
+                abandonedAt: abandonedEntry.timestamp
+              });
+            }
+          }
+        }
+      }
+      
+      // Status transition analytics
+      const statusTransitions = {
+        created: 0,
+        estimated: 0,
+        started: 0,
+        blocked: 0,
+        completed: 0,
+        abandoned: 0
+      };
+      
+      for (const task of allTasks) {
+        if (task.statusHistory) {
+          for (const entry of task.statusHistory) {
+            const entryDate = entry.timestamp.split('T')[0];
+            if (entryDate >= startDate && entryDate <= endDate) {
+              switch (entry.status) {
+                case 'Ready':
+                  if (entry.note && entry.note.includes('created')) statusTransitions.created++;
+                  break;
+                case 'Estimated':
+                  statusTransitions.estimated++;
+                  break;
+                case 'InProgress':
+                  statusTransitions.started++;
+                  break;
+                case 'Blocked':
+                  statusTransitions.blocked++;
+                  break;
+                case 'Completed':
+                  statusTransitions.completed++;
+                  break;
+                case 'Abandoned':
+                  statusTransitions.abandoned++;
+                  break;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('Report debug - Completed tasks found:', completedTasks.length);
+      console.log('Tasks completed in period:', tasksCompletedInPeriod.length);
+      console.log('Tasks abandoned in period:', tasksAbandonedInPeriod.length);
+      console.log('Status transitions:', statusTransitions);
+      console.log('All tasks:', allTasks.length);
+      console.log('Time logs in period:', timeLogs.length);
+      
+      // Tasks in progress with activity in the period
+      const activeTasks = allTasks.filter(task => 
+        ['InProgress', 'Blocked', 'OnHold'].includes(task.status) &&
+        timeLogs.some(log => log.taskId === task.id)
+      );
+      
+      return {
+        period: periodLabel,
+        startDate,
+        endDate,
+        options,
+        summary: {
+          totalHours,
+          completedTasks: completedTasks.length,
+          tasksCompletedInPeriod: tasksCompletedInPeriod.length,
+          tasksAbandonedInPeriod: tasksAbandonedInPeriod.length,
+          activeTasks: activeTasks.length,
+          accomplishments: accomplishments.length,
+          todos: todos.length
+        },
+        statusTransitions,
+        timeByTask,
+        completedTasks,
+        tasksCompletedInPeriod,
+        tasksAbandonedInPeriod,
+        activeTasks,
+        accomplishments,
+        todos
+      };
+    }
+    
+    function generateReportHTML(data) {
+      let html = `
+        <div class="report-content">
+          <h2>Report for ${data.period}</h2>
+          <p class="text-muted">Generated on ${new Date().toLocaleDateString()}</p>
+      `;
+      
+      if (data.options.includeExecutiveSummary) {
+        html += `
+          <div class="report-section mb-4">
+            <h3><i class="fas fa-star me-2"></i>Executive Summary</h3>
+            <div class="row g-3 mb-3">
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-primary mb-1">${data.summary.totalHours.toFixed(1)}h</div>
+                  <div class="text-muted">Total Hours</div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-success mb-1">${data.summary.tasksCompletedInPeriod}</div>
+                  <div class="text-muted">Completed</div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-danger mb-1">${data.summary.tasksAbandonedInPeriod}</div>
+                  <div class="text-muted">Abandoned</div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-warning mb-1">${data.summary.activeTasks}</div>
+                  <div class="text-muted">Active Tasks</div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-info mb-1">${data.statusTransitions.started}</div>
+                  <div class="text-muted">Tasks Started</div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="metric-card text-center p-3 border rounded">
+                  <div class="h3 text-info mb-1">${data.summary.accomplishments}</div>
+                  <div class="text-muted">Accomplishments</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Status Transitions Analytics -->
+            <div class="row g-3 mb-3">
+              <div class="col-12">
+                <h5><i class="fas fa-chart-line me-2"></i>Status Transitions in Period</h5>
+                <div class="row g-2">
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-primary">${data.statusTransitions.created}</div>
+                      <small class="text-muted">Created</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-info">${data.statusTransitions.estimated}</div>
+                      <small class="text-muted">Estimated</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-primary">${data.statusTransitions.started}</div>
+                      <small class="text-muted">Started</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-danger">${data.statusTransitions.blocked}</div>
+                      <small class="text-muted">Blocked</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-success">${data.statusTransitions.completed}</div>
+                      <small class="text-muted">Completed</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="text-center p-2 border rounded">
+                      <div class="fw-bold text-dark">${data.statusTransitions.abandoned}</div>
+                      <small class="text-muted">Abandoned</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (data.options.includeTimesheet) {
+        html += `
+          <div class="report-section mb-4">
+            <h3><i class="fas fa-clock me-2"></i>Time Summary</h3>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Hours</th>
+                    <th>Sessions</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        const sortedTasks = Object.values(data.timeByTask).sort((a, b) => b.hours - a.hours);
+        for (const item of sortedTasks) {
+          html += `
+                  <tr>
+                    <td>${item.task?.title || 'Unknown Task'}</td>
+                    <td><span class="badge bg-secondary">${item.task?.status || 'N/A'}</span></td>
+                    <td><strong>${item.hours.toFixed(1)}h</strong></td>
+                    <td>${item.logs.length}</td>
+                  </tr>
+          `;
+        }
+        
+        html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (data.options.includeTaskProgress && (data.tasksCompletedInPeriod.length > 0 || data.tasksAbandonedInPeriod.length > 0)) {
+        html += `
+          <div class="report-section mb-4">
+            <h3><i class="fas fa-check-circle me-2"></i>Task Completions & Abandonments</h3>
+        `;
+        
+        if (data.tasksCompletedInPeriod.length > 0) {
+          html += `
+            <h5 class="text-success mt-3">✅ Completed in Period (${data.tasksCompletedInPeriod.length})</h5>
+            <ul class="list-group mb-3">
+          `;
+          
+          for (const task of data.tasksCompletedInPeriod) {
+            const completedDate = new Date(task.completedAt);
+            html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="fw-bold">${task.title}</span>
+                    <small class="text-muted d-block">Completed: ${completedDate.toLocaleDateString()} at ${completedDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                  </div>
+                  <span class="badge bg-success">Completed</span>
+                </li>
+            `;
+          }
+          
+          html += `
+            </ul>
+          `;
+        }
+        
+        if (data.tasksAbandonedInPeriod.length > 0) {
+          html += `
+            <h5 class="text-danger mt-3">❌ Abandoned in Period (${data.tasksAbandonedInPeriod.length})</h5>
+            <ul class="list-group mb-3">
+          `;
+          
+          for (const task of data.tasksAbandonedInPeriod) {
+            const abandonedDate = new Date(task.abandonedAt);
+            html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="fw-bold">${task.title}</span>
+                    <small class="text-muted d-block">Abandoned: ${abandonedDate.toLocaleDateString()} at ${abandonedDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                  </div>
+                  <span class="badge bg-danger">Abandoned</span>
+                </li>
+            `;
+          }
+          
+          html += `
+            </ul>
+          `;
+        }
+        
+        html += `
+            </ul>
+          </div>
+        `;
+      }
+      
+      if (data.options.includeAccomplishments && data.accomplishments.length > 0) {
+        html += `
+          <div class="report-section mb-4">
+            <h3><i class="fas fa-trophy me-2"></i>Accomplishments</h3>
+            <div class="list-group">
+        `;
+        
+        for (const acc of data.accomplishments) {
+          html += `
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                  <h6 class="mb-1">${acc.title}</h6>
+                  <small class="text-muted">${new Date(acc.date).toLocaleDateString()}</small>
+                </div>
+                ${acc.description ? `<p class="mb-1">${acc.description}</p>` : ''}
+              </div>
+          `;
+        }
+        
+        html += `
+            </div>
+          </div>
+        `;
+      }
+      
+      html += `
+        </div>
+      `;
+      
+      return html;
+    }
+    
+    window.exportReportAsMarkdown = function() {
+      if (!currentReportData) {
+        alert('Please generate a report first');
+        return;
+      }
+      
+      const markdown = generateMarkdownReport(currentReportData);
+      
+      // Create download
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report-${currentReportData.startDate}-to-${currentReportData.endDate}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // Also copy to clipboard
+      navigator.clipboard.writeText(markdown).then(() => {
+        alert('Report downloaded and copied to clipboard!');
+      }).catch(() => {
+        alert('Report downloaded successfully!');
+      });
+    }
+    
+    function generateMarkdownReport(data) {
+      let markdown = `# Report for ${data.period}\n\n`;
+      markdown += `*Generated on ${new Date().toLocaleDateString()}*\n\n`;
+      
+      if (data.options.includeExecutiveSummary) {
+        markdown += `## Executive Summary\n\n`;
+        markdown += `- **Total Hours:** ${data.summary.totalHours.toFixed(1)}h\n`;
+        markdown += `- **Tasks Completed:** ${data.summary.completedTasks}\n`;
+        markdown += `- **Active Tasks:** ${data.summary.activeTasks}\n`;
+        markdown += `- **Accomplishments:** ${data.summary.accomplishments}\n\n`;
+      }
+      
+      if (data.options.includeTimesheet) {
+        markdown += `## Time Summary\n\n`;
+        markdown += `| Task | Status | Hours | Sessions |\n`;
+        markdown += `|------|--------|-------|----------|\n`;
+        
+        const sortedTasks = Object.values(data.timeByTask).sort((a, b) => b.hours - a.hours);
+        for (const item of sortedTasks) {
+          markdown += `| ${item.task?.title || 'Unknown Task'} | ${item.task?.status || 'N/A'} | ${item.hours.toFixed(1)}h | ${item.logs.length} |\n`;
+        }
+        markdown += `\n`;
+      }
+      
+      if (data.options.includeTaskProgress && data.completedTasks.length > 0) {
+        markdown += `## Completed Tasks\n\n`;
+        for (const task of data.completedTasks) {
+          markdown += `- ✅ ${task.title}\n`;
+        }
+        markdown += `\n`;
+      }
+      
+      if (data.options.includeAccomplishments && data.accomplishments.length > 0) {
+        markdown += `## Accomplishments\n\n`;
+        for (const acc of data.accomplishments) {
+          markdown += `### ${acc.title}\n`;
+          if (acc.description) {
+            markdown += `${acc.description}\n`;
+          }
+          markdown += `*${new Date(acc.date).toLocaleDateString()}*\n\n`;
+        }
+      }
+      
+      return markdown;
+    }
+  </script>
+</body>
+</html>
